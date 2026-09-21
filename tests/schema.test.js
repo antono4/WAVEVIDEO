@@ -102,3 +102,74 @@ test('presets differ from each other', () => {
     seen.add(signature);
   }
 });
+
+test('every visualizer style is offered by the schema', () => {
+  const defs = SECTIONS.visualizer;
+  const select = defs
+    .flatMap((d) => (d.type === 'group' ? d.children : [d]))
+    .find((d) => d.path === 'visType');
+  assert.ok(select, 'visualizer section must expose a visType select');
+  const values = select.options.map(([v]) => v);
+  assert.ok(values.length >= 20, `expected at least 20 styles, found ${values.length}`);
+  for (const required of ['aurora', 'lissajous', 'starfield', 'spikes', 'dualWave', 'terrain', 'web', 'strobe']) {
+    assert.ok(values.includes(required), `missing visualizer style ${required}`);
+  }
+});
+
+test('every colour mode is offered by the schema', () => {
+  const select = SECTIONS.visualizer
+    .flatMap((d) => (d.type === 'group' ? d.children : [d]))
+    .find((d) => d.path === 'colorMode');
+  const values = select.options.map(([v]) => v);
+  for (const required of ['gradient', 'solid', 'rainbow', 'fire', 'ice', 'neon', 'sunset', 'toxic', 'candy', 'gold', 'deep']) {
+    assert.ok(values.includes(required), `missing colour mode ${required}`);
+  }
+});
+
+test('preset visualizer and colour modes are all valid options', () => {
+  const visualizers = new Set(SECTIONS.visualizer
+    .flatMap((d) => (d.type === 'group' ? d.children : [d]))
+    .find((d) => d.path === 'visType').options.map(([v]) => v));
+  const modes = new Set(SECTIONS.visualizer
+    .flatMap((d) => (d.type === 'group' ? d.children : [d]))
+    .find((d) => d.path === 'colorMode').options.map(([v]) => v));
+  for (const preset of PRESETS) {
+    assert.ok(visualizers.has(preset.settings.visType),
+      `${preset.name} uses unregistered visualizer "${preset.settings.visType}"`);
+    assert.ok(modes.has(preset.settings.colorMode),
+      `${preset.name} uses unregistered colour mode "${preset.settings.colorMode}"`);
+  }
+});
+
+test('preset backgrounds stay inside the dark range they claim', () => {
+  for (const preset of PRESETS) {
+    assert.ok(preset.settings.bgDim >= 0 && preset.settings.bgDim <= 0.85,
+      `${preset.name} bgDim out of range`);
+    if (preset.settings.kaleido) {
+      assert.ok(preset.settings.kaleido >= 1 && preset.settings.kaleido <= 12,
+        `${preset.name} kaleido out of range`);
+    }
+    if (preset.settings.trail) {
+      assert.ok(preset.settings.trail > 0 && preset.settings.trail < 1,
+        `${preset.name} trail must be a fraction under 1`);
+    }
+    assert.ok(preset.settings.scanlines >= 0 && preset.settings.scanlines <= 1);
+  }
+});
+
+test('presets cover the effects the renderer exposes', () => {
+  const used = (key) => PRESETS.some((p) => Number(p.settings[key]) > 0);
+  for (const key of ['kaleido', 'trail', 'scanlines', 'chroma', 'hueShift', 'spin']) {
+    assert.ok(used(key), `no preset exercises the "${key}" effect`);
+  }
+});
+
+test('presets cover every visualizer style', () => {
+  const covered = new Set(PRESETS.map((p) => p.settings.visType));
+  const missing = SECTIONS.visualizer
+    .flatMap((d) => (d.type === 'group' ? d.children : [d]))
+    .find((d) => d.path === 'visType').options
+    .map(([v]) => v)
+    .filter((v) => !covered.has(v));
+  assert.deepEqual(missing, [], `visualizer styles with no preset: ${missing.join(', ')}`);
+});

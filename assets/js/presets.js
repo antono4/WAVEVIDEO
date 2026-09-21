@@ -18,6 +18,15 @@ const base = {
   lineWidth: 3,
   lineStyle: 'smooth',
   beatSensitivity: 1.25,
+  // motion and reaction effects
+  spin: 0,
+  glowPulse: 0.35,
+  chroma: 0,
+  hueShift: 0,
+  kaleido: 0,
+  trail: 0,
+  scanlines: 0,
+  beatZoom: 0.03,
   colorMode: 'gradient',
   color1: '#8b5cf6',
   color2: '#06b6d4',
@@ -96,6 +105,68 @@ export const PRESETS = [
   make('Studio Mono', 'High-contrast monochrome with film grain', {
     visType: 'bars', colorMode: 'solid', color1: '#f8fafc', bgType: 'solid',
     bgColor1: '#000000', glow: 24, elNoise: true, elParticles: false, barCount: 84, bgDim: 0
+  }),
+
+  /* ---- effects-driven looks ---- */
+  make('Hypnosis', 'Kaleidoscope wedges turning over a slow spin', {
+    visType: 'radial', colorMode: 'candy', bgType: 'radial', bgColor1: '#0b0416',
+    bgColor2: '#2a0b3d', kaleido: 8, spin: 0.6, glow: 26, barCount: 110, bgDim: 0.15
+  }),
+  make('Retro CRT', 'Scanlines, heavy trails and a warm amber trace', {
+    visType: 'wave', colorMode: 'gold', bgType: 'solid', bgColor1: '#0a0703',
+    scanlines: 0.62, trail: 0.72, chroma: 4, glow: 30, lineWidth: 2.5,
+    elParticles: false, elGhostBars: false, bgDim: 0.1
+  }),
+  make('Vaporwave', 'Chromatic split with a sunset palette and grid', {
+    visType: 'bars', colorMode: 'sunset', bgColor1: '#12002b', bgColor2: '#4a1050',
+    bgAngle: 200, chroma: 7, elGrid: true, glow: 28, barCount: 64, bgDim: 0.2
+  }),
+  make('Prism', 'Hue-shifting gradient with a light trail', {
+    visType: 'circular', colorMode: 'gradient', color1: '#ff5cf0', color2: '#5cf0ff',
+    bgType: 'radial', bgColor1: '#04040a', bgColor2: '#141433',
+    hueShift: 140, trail: 0.55, glow: 34, barCount: 128, elGhostBars: false
+  }),
+  make('Deep Space', 'Starfield tunnel with drifting particles', {
+    visType: 'starfield', colorMode: 'deep', bgType: 'radial', bgColor1: '#01030a',
+    bgColor2: '#06162e', glow: 20, elParticles: false, elGhostBars: false, bgDim: 0.05
+  }),
+  make('Sonic Web', 'Node mesh that tightens as the low end hits', {
+    visType: 'web', colorMode: 'gradient', color1: '#22d3ee', color2: '#a78bfa',
+    bgType: 'solid', bgColor1: '#04060d', glow: 26, spin: 0.3, barCount: 96, elGrid: true
+  }),
+  make('Aurora', 'Layered ribbons breathing above a dark horizon', {
+    visType: 'aurora', colorMode: 'toxic', bgType: 'linear', bgColor1: '#01070a',
+    bgColor2: '#062028', bgAngle: 180, glow: 32, elGhostBars: false,
+    elParticles: false, bgDim: 0.1
+  }),
+  make('Tokyo Drift', 'Spikes punching out with an aggressive beat zoom', {
+    visType: 'spikes', colorMode: 'neon', bgType: 'solid', bgColor1: '#04010a',
+    glow: 30, spin: -0.5, barCount: 128, beatZoom: 0.12, elGhostBars: false
+  }),
+  make('Mountains', 'Receding ridge lines over a cold gradient', {
+    visType: 'terrain', colorMode: 'ice', bgType: 'linear', bgColor1: '#010810',
+    bgColor2: '#0b2c4a', bgAngle: 180, glow: 18, barCount: 90,
+    elGhostBars: false, elParticles: false
+  }),
+  make('Double Wave', 'Twin waveforms wrapped around a ribbon of light', {
+    visType: 'dualWave', colorMode: 'gradient', color1: '#38bdf8', color2: '#f472b6',
+    bgType: 'solid', bgColor1: '#050510', glow: 26, lineWidth: 3.5,
+    elGhostBars: false, elParticles: false
+  }),
+  make('Glitch Lab', 'Strobe grid with scanlines and hard chromatic tearing', {
+    visType: 'strobe', colorMode: 'gradient', color1: '#f43f5e', color2: '#22d3ee',
+    bgType: 'solid', bgColor1: '#020204', chroma: 11, scanlines: 0.45,
+    glow: 14, barCount: 120, elGrid: false, elParticles: false, bgDim: 0
+  }),
+  make('Liquid Light', 'Lissajous figures with a long glowing trail', {
+    visType: 'lissajous', colorMode: 'rainbow', bgType: 'radial', bgColor1: '#02030a',
+    bgColor2: '#12082b', trail: 0.8, glow: 38, lineWidth: 3, spin: 0.25,
+    elGhostBars: false, elParticles: false
+  }),
+  make('Butterfly', 'Symmetric mirror wings beating with the beat', {
+    visType: 'mirrorSym', colorMode: 'candy', bgType: 'radial', bgColor1: '#0a0410',
+    bgColor2: '#2b0f3a', glow: 30, barCount: 72, beatZoom: 0.08,
+    elGhostBars: false, elParticles: false
   })
 ];
 
