@@ -276,24 +276,41 @@ canvas:fullscreen { border-radius: 0; max-width: none; max-height: none; width: 
 .empty-state p { margin: 0; font-size: 12.5px; color: var(--text-mute); }
 .empty-actions { display: flex; gap: 9px; margin-top: 12px; }
 
-/* Play overlay on the preview. Dims while playing so it never hides the art. */
+/* Play overlay, centred on the video itself. Dims while playing so it never
+   hides the artwork, and keeps an attention ring while paused. */
 .stage-play {
   position: absolute;
   display: flex; align-items: center; justify-content: center;
-  width: 82px; height: 82px; padding: 0;
-  border: 1px solid #ffffff33; border-radius: 50%;
-  background: #0b0d16cc; color: #fff;
+  width: 96px; height: 96px; padding: 0;
+  border: 1px solid #ffffff40; border-radius: 50%;
+  background: #0b0d16d9; color: #fff;
   backdrop-filter: blur(6px);
-  box-shadow: var(--shadow-1);
+  box-shadow: 0 10px 34px #000a, 0 0 0 1px #ffffff14 inset;
   transition: transform var(--t), background var(--t), opacity var(--t);
-  z-index: 2;
+  z-index: 3;
 }
-.stage-play .ico { width: 36px; height: 36px; stroke-width: 1.5; margin-left: 3px; }
-.stage-play:hover { transform: scale(1.07); background: var(--accent); border-color: var(--accent-hi); }
+.stage-play .ico { width: 40px; height: 40px; stroke-width: 1.5; margin-left: 4px; }
+.stage-play:hover { transform: scale(1.06); background: var(--accent); border-color: var(--accent-hi); }
+.stage-play:active { transform: scale(0.98); }
+/* Soft expanding ring draws the eye to the control while paused. */
+.stage-play::after {
+  content: ""; position: absolute; inset: -12px; border-radius: 50%;
+  border: 2px solid #ffffff38; pointer-events: none;
+  animation: stage-ring 2.6s ease-out infinite;
+}
+@keyframes stage-ring {
+  0% { transform: scale(0.88); opacity: 0.75; }
+  70% { transform: scale(1.22); opacity: 0; }
+  100% { transform: scale(1.22); opacity: 0; }
+}
 .stage-play.is-playing { opacity: 0; }
+.stage-play.is-playing::after { animation: none; opacity: 0; }
 .canvas-wrap:hover .stage-play.is-playing,
 .stage-play.is-playing:focus-visible { opacity: 1; }
 .stage-play.is-playing .ico { margin-left: 0; }
+@media (prefers-reduced-motion: reduce) {
+  .stage-play::after { animation: none; opacity: 0; }
+}
 .sr-only {
   position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
   overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0;
