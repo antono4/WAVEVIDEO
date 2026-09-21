@@ -1,0 +1,16 @@
+{
+  "name": "wavevideo-studio",
+  "version": "2.0.0",
+  "private": true,
+  "description": "Browser-based music visualizer and lyric video maker. No build step, no upload, no watermark.",
+  "type": "module",
+  "license": "MIT",
+  "scripts": {
+    "start": "python3 -m http.server 12000",
+    "test": "node --test tests/*.test.js",
+    "test:watch": "node --test --watch tests/*.test.js"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}
