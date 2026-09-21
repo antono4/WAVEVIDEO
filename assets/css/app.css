@@ -276,6 +276,30 @@ canvas:fullscreen { border-radius: 0; max-width: none; max-height: none; width: 
 .empty-state p { margin: 0; font-size: 12.5px; color: var(--text-mute); }
 .empty-actions { display: flex; gap: 9px; margin-top: 12px; }
 
+/* Play overlay on the preview. Dims while playing so it never hides the art. */
+.stage-play {
+  position: absolute;
+  display: flex; align-items: center; justify-content: center;
+  width: 82px; height: 82px; padding: 0;
+  border: 1px solid #ffffff33; border-radius: 50%;
+  background: #0b0d16cc; color: #fff;
+  backdrop-filter: blur(6px);
+  box-shadow: var(--shadow-1);
+  transition: transform var(--t), background var(--t), opacity var(--t);
+  z-index: 2;
+}
+.stage-play .ico { width: 36px; height: 36px; stroke-width: 1.5; margin-left: 3px; }
+.stage-play:hover { transform: scale(1.07); background: var(--accent); border-color: var(--accent-hi); }
+.stage-play.is-playing { opacity: 0; }
+.canvas-wrap:hover .stage-play.is-playing,
+.stage-play.is-playing:focus-visible { opacity: 1; }
+.stage-play.is-playing .ico { margin-left: 0; }
+.sr-only {
+  position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+  overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0;
+}
+#stage.is-live { cursor: pointer; }
+
 /* ============================== timeline ================================= */
 .timeline-wrap { position: relative; flex: 0 0 auto; margin: 0 16px; border-radius: var(--r-md); overflow: hidden; border: 1px solid var(--line); background: var(--surface-1); }
 #timeline { display: block; width: 100%; height: 68px; }

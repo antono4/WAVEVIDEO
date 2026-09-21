@@ -152,6 +152,10 @@
 
     <div class="canvas-wrap" id="canvasWrap">
       <canvas id="stage" width="1920" height="1080" aria-label="Visualizer preview"></canvas>
+      <button class="stage-play" id="btnStagePlay" hidden aria-label="Play preview">
+        <svg class="ico" aria-hidden="true"><use href="#i-play" id="stagePlayIcon"/></svg>
+        <span class="sr-only" id="stagePlayLabel">Play preview</span>
+      </button>
       <div class="empty-state" id="emptyState">
         <svg class="ico big" aria-hidden="true"><use href="#i-audio"/></svg>
         <h3>Drop an audio file to start</h3>
@@ -201,6 +205,8 @@
       </ol>
       <h3>Timeline</h3>
       <p>Click anywhere on the waveform to seek. Enable trim in the Audio section to set in and out points; exports honour the trim range. Lyric timestamps show up as markers.</p>
+      <h3>Playing</h3>
+      <p>Press the round button on the preview, the Play button under the timeline, or simply click the artwork itself. Space bar works too.</p>
       <h3>Lyrics</h3>
       <p>One line per row as <code>0:12.5|Line text|Optional translation</code>. Wrap words in <code>*asterisks*</code> for a per-word karaoke fill. Import and export standard <code>.lrc</code> files.</p>
       <h3>Shortcuts</h3>
