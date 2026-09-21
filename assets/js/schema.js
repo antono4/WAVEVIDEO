@@ -27,6 +27,15 @@ export const DEFAULT_SETTINGS = {
   lineWidth: 3,
   lineStyle: 'smooth',
   beatSensitivity: 1.25,
+  // motion and reaction effects
+  spin: 0,
+  glowPulse: 0.35,
+  chroma: 0,
+  hueShift: 0,
+  kaleido: 0,
+  trail: 0,
+  scanlines: 0,
+  beatZoom: 0.03,
   // colour
   colorMode: 'gradient',
   color1: '#8b5cf6',
@@ -129,12 +138,18 @@ const VIS_TYPES = [
   ['bars', 'Bars'], ['barsMirror', 'Bars mirror'], ['wave', 'Waveform line'],
   ['waveFill', 'Waveform filled'], ['blocks', 'Blocks'], ['dots', 'Dot matrix'],
   ['circular', 'Circular bars'], ['radial', 'Radial wave'], ['rings', 'Pulse rings'],
-  ['led', 'LED meter'], ['mirrorSym', 'Symmetric mirror'], ['spectrum', 'Spectrum area']
+  ['led', 'LED meter'], ['mirrorSym', 'Symmetric mirror'], ['spectrum', 'Spectrum area'],
+  ['aurora', 'Aurora ribbons'], ['lissajous', 'Lissajous curves'],
+  ['starfield', 'Starfield tunnel'], ['spikes', 'Radial spikes'],
+  ['dualWave', 'Dual waveform'], ['terrain', 'Terrain ridges'],
+  ['web', 'Web mesh'], ['strobe', 'Strobe grid']
 ];
 
 const COLOR_MODES = [
   ['gradient', 'Gradient (colour 1 to 2)'], ['solid', 'Solid (colour 1)'],
-  ['rainbow', 'Rainbow'], ['fire', 'Fire'], ['ice', 'Ice'], ['neon', 'Neon']
+  ['rainbow', 'Rainbow'], ['fire', 'Fire'], ['ice', 'Ice'], ['neon', 'Neon'],
+  ['sunset', 'Sunset'], ['toxic', 'Toxic'], ['candy', 'Candy'],
+  ['gold', 'Gold'], ['deep', 'Deep sea']
 ];
 
 export const RESOLUTIONS = [
@@ -211,6 +226,19 @@ export const SECTIONS = {
     g('Waveform', [
       { type: 'select', path: 'lineStyle', label: 'Line style', options: [['smooth', 'Smooth curve'], ['sharp', 'Sharp']] },
       r('lineWidth', 'Line width', 1, 14, 0.5)
+    ]),
+    g('Motion', [
+      r('spin', 'Auto spin', -2, 2, 0.05),
+      r('beatZoom', 'Beat zoom', 0, 0.35, 0.005),
+      r('glowPulse', 'Glow pulse on beat', 0, 1, 0.02)
+    ]),
+    g('Effects', [
+      r('chroma', 'Chromatic aberration', 0, 14, 0.5, 'px'),
+      r('kaleido', 'Kaleidoscope', 0, 12, 1),
+      r('hueShift', 'Hue shift', 0, 360, 1, 'deg'),
+      r('trail', 'Motion trail', 0, 0.9, 0.02),
+      r('scanlines', 'Scanlines', 0, 1, 0.02),
+      { type: 'note', text: 'Effects stack on top of the visualizer. Kaleidoscope mirrors the frame into wedges, chromatic aberration splits the colour channels, and trail leaves light behind fast movement.' }
     ]),
     g('Reactivity', [
       r('beatSensitivity', 'Beat sensitivity', 0.6, 2.4, 0.05),

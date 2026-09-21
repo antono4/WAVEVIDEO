@@ -12,6 +12,9 @@ import { resolveLyricState, buildWordPlan, stripMarkers } from './lyrics.js';
 
 const BACKGROUND = '#000';
 
+/** Solid primaries used to isolate a colour channel for chromatic aberration. */
+const TINTS = ['#ff0000', '#00ff00', '#0000ff'];
+
 /** Deterministic pseudo-random so thumbnails never flicker between renders. */
 function seeded(seed) {
   let s = seed >>> 0;
@@ -19,6 +22,54 @@ function seeded(seed) {
     s = (s * 1664525 + 1013904223) >>> 0;
     return s / 4294967296;
   };
+}
+
+/**
+ * Rotate an RGB triple around the hue wheel.
+ *
+ * Verified against the HSL round trip so the solid and gradient colour modes
+ * respond to the hue shift control the same way the HSL-based modes do.
+ */
+export function rotateHue([r, g, b], degrees) {
+  const shift = ((degrees % 360) + 360) % 360;
+  if (!shift) return [r, g, b];
+  const rn = r / 255;
+  const gn = g / 255;
+  const bn = b / 255;
+  const max = Math.max(rn, gn, bn);
+  const min = Math.min(rn, gn, bn);
+  const l = (max + min) / 2;
+  const d = max - min;
+  let h = 0;
+  let s = 0;
+  if (d) {
+    s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+    if (max === rn) h = ((gn - bn) / d + (gn < bn ? 6 : 0)) / 6;
+    else if (max === gn) h = ((bn - rn) / d + 2) / 6;
+    else h = ((rn - gn) / d + 4) / 6;
+  }
+  h = (((h * 360 + shift) % 360) + 360) % 360 / 360;
+
+  const hue2rgb = (p, q, t) => {
+    let tt = t;
+    if (tt < 0) tt += 1;
+    if (tt > 1) tt -= 1;
+    if (tt < 1 / 6) return p + (q - p) * 6 * tt;
+    if (tt < 1 / 2) return q;
+    if (tt < 2 / 3) return p + (q - p) * (2 / 3 - tt) * 6;
+    return p;
+  };
+  if (!s) {
+    const v = Math.round(l * 255);
+    return [v, v, v];
+  }
+  const q = l < 0.5 ? l * (1 + s) : l + s - l * s;
+  const p = 2 * l - q;
+  return [
+    Math.round(hue2rgb(p, q, h + 1 / 3) * 255),
+    Math.round(hue2rgb(p, q, h) * 255),
+    Math.round(hue2rgb(p, q, h - 1 / 3) * 255)
+  ];
 }
 
 export class Renderer {
@@ -58,19 +109,32 @@ export class Renderer {
     const t = n > 1 ? i / (n - 1) : 0;
     const c1 = hexToRgb(settings.color1);
     const c2 = hexToRgb(settings.color2);
+    // A static hue rotation keeps the preset palettes intact while letting the
+    // hue shift effect drift the whole scheme over time.
+    const shift = settings.hueShift || 0;
     switch (settings.colorMode) {
       case 'solid':
-        return rgbCss(c1, alpha);
+        return rgbCss(rotateHue(c1, shift), alpha);
       case 'rainbow':
-        return hslCss(t * 320, 85, 60 - 6 * (1 - t));
+        return hslCss(t * 320 + shift, 85, 60 - 6 * (1 - t));
       case 'fire':
-        return hslCss(50 - t * 50, 100, 38 + 22 * (1 - t));
+        return hslCss(50 - t * 50 + shift, 100, 38 + 22 * (1 - t));
       case 'ice':
-        return hslCss(190 + t * 40, 90, 45 + 25 * t);
+        return hslCss(190 + t * 40 + shift, 90, 45 + 25 * t);
       case 'neon':
-        return hslCss(280 + t * 120, 100, 62);
+        return hslCss(280 + t * 120 + shift, 100, 62);
+      case 'sunset':
+        return hslCss(330 - t * 60 + shift, 92, 42 + 30 * t);
+      case 'toxic':
+        return hslCss(90 + t * 60 + shift, 95, 38 + 26 * (1 - t));
+      case 'candy':
+        return hslCss(310 + Math.sin(t * Math.PI) * 60 + shift, 90, 68 - 10 * t);
+      case 'gold':
+        return hslCss(45 - t * 15 + shift, 85, 52 + 22 * (1 - t));
+      case 'deep':
+        return hslCss(200 + t * 60 + shift, 80, 30 + 32 * t);
       default:
-        return rgbCss(mixRgb(c1, c2, t), alpha);
+        return rgbCss(mixRgb(rotateHue(c1, shift), rotateHue(c2, shift), t), alpha);
     }
   }
 
@@ -231,6 +295,30 @@ export class Renderer {
         break;
       case 'spectrum':
         this._drawSpectrum(ctx, w, h, o, n);
+        break;
+      case 'aurora':
+        this._drawAurora(ctx, w, h, o, n);
+        break;
+      case 'lissajous':
+        this._drawLissajous(ctx, w, h, o, cx, cy);
+        break;
+      case 'starfield':
+        this._drawStarfield(ctx, w, h, o, cx, cy);
+        break;
+      case 'spikes':
+        this._drawSpikes(ctx, w, h, o, n, cx, cy, rot);
+        break;
+      case 'dualWave':
+        this._drawDualWave(ctx, w, h, o, cx, cy);
+        break;
+      case 'terrain':
+        this._drawTerrain(ctx, w, h, o, n);
+        break;
+      case 'web':
+        this._drawWeb(ctx, w, h, o, n, cx, cy);
+        break;
+      case 'strobe':
+        this._drawStrobe(ctx, w, h, o, n);
         break;
       default:
         this._drawWave(ctx, w, h, o, cx, cy);
@@ -597,6 +685,409 @@ export class Renderer {
     ctx.restore();
   }
 
+  /** Overlapping translucent ribbons that drift with the spectrum. */
+  _drawAurora(ctx, w, h, o, n) {
+    const s = o.settings;
+    const bins = o.bins;
+    const layers = 5;
+    for (let layer = 0; layer < layers; layer++) {
+      const phase = layer * 0.7 + o.t * (0.25 + layer * 0.05);
+      const alpha = 0.16 + 0.06 * (layers - layer);
+      const amp = h * (0.1 + layer * 0.035) * (0.7 + o.energy);
+      ctx.beginPath();
+      ctx.moveTo(0, h * 0.5);
+      for (let i = 0; i <= n; i++) {
+        const v = bins[i % n] || 0;
+        const x = (i / n) * w;
+        const y = h * (0.45 + layer * 0.05) + Math.sin(i * 0.16 + phase) * amp * (0.4 + v);
+        if (i) ctx.lineTo(x, y);
+        else ctx.moveTo(x, y);
+      }
+      ctx.lineTo(w, h);
+      ctx.lineTo(0, h);
+      ctx.closePath();
+      const g = ctx.createLinearGradient(0, h * 0.2, 0, h);
+      const top = this.bandColor(s, layer * 3, n, alpha * 2.2);
+      const bottom = this.bandColor(s, layer * 3 + 1, n, 0);
+      try {
+        g.addColorStop(0, top);
+        g.addColorStop(1, bottom);
+        ctx.fillStyle = g;
+      } catch {
+        ctx.fillStyle = top;
+      }
+      ctx.globalAlpha = 0.85;
+      ctx.fill();
+    }
+    ctx.globalAlpha = 1;
+  }
+
+  /** Lissajous figure traced from the time-domain signal against itself. */
+  _drawLissajous(ctx, w, h, o, cx, cy) {
+    const s = o.settings;
+    const wave = o.wave;
+    if (!wave || !wave.length) return;
+    const rx = Math.min(w, h) * 0.34 * (1 + o.bass * 0.16);
+    const ry = rx * 0.72;
+    const step = Math.max(1, Math.floor(wave.length / 700));
+    ctx.beginPath();
+    for (let i = 0; i < wave.length; i += step) {
+      const a = (wave[i] - 128) / 128;
+      const b = (wave[(i * 3) % wave.length] - 128) / 128;
+      const aa = a * Math.PI * (1 + s.bassBoost * 0.2) + o.t * s.spin;
+      const bb = (b + a * 0.4) * Math.PI + o.t * 0.35;
+      const x = cx + Math.sin(aa) * rx;
+      const y = cy + Math.sin(bb) * ry;
+      if (i) ctx.lineTo(x, y);
+      else ctx.moveTo(x, y);
+    }
+    ctx.strokeStyle = this.bandColor(s, 1, 3, 0.9);
+    ctx.lineWidth = s.lineWidth * (1 + o.bass * 0.5);
+    ctx.stroke();
+    ctx.globalAlpha = 0.25;
+    ctx.strokeStyle = this.bandColor(s, 2, 3, 0.8);
+    ctx.lineWidth = s.lineWidth * 3;
+    ctx.stroke();
+    ctx.globalAlpha = 1;
+  }
+
+  /** Stars streaming outward, speed driven by the low end. */
+  _drawStarfield(ctx, w, h, o, cx, cy) {
+    const s = o.settings;
+    if (!this.stars) {
+      const rand = seeded(31);
+      this.stars = Array.from({ length: 220 }, () => ({
+        a: rand() * Math.PI * 2,
+        d: rand(),
+        speed: 0.25 + rand() * 0.9
+      }));
+    }
+    const maxR = Math.hypot(w, h) * 0.6;
+    const drift = o.freezeMotion ? 0 : 0.0016 + o.energy * 0.012;
+    for (let i = 0; i < this.stars.length; i++) {
+      const star = this.stars[i];
+      star.d += drift * star.speed;
+      if (star.d > 1) star.d -= 1;
+      const r = star.d * maxR;
+      const x = cx + Math.cos(star.a) * r;
+      const y = cy + Math.sin(star.a) * r * 0.62;
+      const size = 0.6 + star.d * 3.4;
+      ctx.globalAlpha = Math.min(1, star.d * 1.5);
+      ctx.fillStyle = this.bandColor(s, i, this.stars.length, 1);
+      ctx.beginPath();
+      ctx.arc(x, y, size, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    ctx.globalAlpha = 1;
+  }
+
+  /** Radial spikes whose length tracks each band. */
+  _drawSpikes(ctx, w, h, o, n, cx, cy, rot) {
+    const s = o.settings;
+    const bins = o.bins;
+    const inner = Math.min(w, h) * 0.08 * (1 + o.bass * 0.3);
+    const outer = Math.min(w, h) * 0.42;
+    for (let i = 0; i < n; i++) {
+      const a = (i / n) * Math.PI * 2 + rot;
+      const v = bins[i] || 0;
+      const len = inner + (outer - inner) * v;
+      ctx.strokeStyle = this.bandColor(s, i, n, 0.9);
+      ctx.lineWidth = Math.max(2, (Math.PI * 2 * inner) / n * 0.7);
+      ctx.beginPath();
+      ctx.moveTo(cx + Math.cos(a) * inner, cy + Math.sin(a) * inner);
+      ctx.lineTo(cx + Math.cos(a) * len, cy + Math.sin(a) * len);
+      ctx.stroke();
+    }
+  }
+
+  /** Two mirrored waveforms with a filled gap between them. */
+  _drawDualWave(ctx, w, h, o, cx, cy) {
+    const s = o.settings;
+    const wave = o.wave;
+    if (!wave || !wave.length) return;
+    const amp = h * 0.17 * (1 + o.bass);
+    const n = wave.length;
+    const step = Math.max(1, Math.floor(n / 600));
+    const yAt = (i, sign) => cy + sign * ((wave[i] - 128) / 128) * amp;
+
+    const trace = (sign) => {
+      ctx.beginPath();
+      for (let i = 0; i < n; i += step) {
+        const x = (i / (n - 1)) * w;
+        const y = yAt(i, sign);
+        if (i) ctx.lineTo(x, y);
+        else ctx.moveTo(x, y);
+      }
+    };
+
+    // Filled band between the two traces.
+    ctx.beginPath();
+    for (let i = 0; i < n; i += step) {
+      const x = (i / (n - 1)) * w;
+      const y = yAt(i, 1);
+      if (i) ctx.lineTo(x, y);
+      else ctx.moveTo(x, y);
+    }
+    for (let i = n - step; i >= 0; i -= step) {
+      ctx.lineTo((i / (n - 1)) * w, yAt(i, -1));
+    }
+    ctx.closePath();
+    ctx.fillStyle = rgbCss(hexToRgb(s.color2), 0.16);
+    ctx.fill();
+
+    trace(1);
+    ctx.strokeStyle = this.bandColor(s, 0, 2, 0.95);
+    ctx.lineWidth = s.lineWidth;
+    ctx.stroke();
+    trace(-1);
+    ctx.strokeStyle = this.bandColor(s, 2, 2, 0.95);
+    ctx.lineWidth = s.lineWidth;
+    ctx.stroke();
+  }
+
+  /** Layered ridges receding into the distance. */
+  _drawTerrain(ctx, w, h, o, n) {
+    const s = o.settings;
+    const bins = o.bins;
+    const rows = 14;
+    for (let row = rows - 1; row >= 0; row--) {
+      const depth = row / (rows - 1);
+      const baseY = h * (0.34 + depth * 0.6);
+      const amp = h * 0.16 * (0.35 + o.energy) * (1 - depth * 0.5);
+      ctx.beginPath();
+      ctx.moveTo(0, baseY);
+      for (let i = 0; i <= n; i++) {
+        const v = bins[i % n] || 0;
+        const phase = i * 0.22 + row * 0.6 + o.t * 0.6;
+        const x = (i / n) * w;
+        const y = baseY - (Math.sin(phase) * 0.5 + 0.5) * amp * (0.4 + v);
+        ctx.lineTo(x, y);
+      }
+      ctx.lineTo(w, h);
+      ctx.lineTo(0, h);
+      ctx.closePath();
+      ctx.fillStyle = this.bandColor(s, row, rows, 0.1 + depth * 0.5);
+      ctx.fill();
+      ctx.strokeStyle = this.bandColor(s, row, rows, 0.75);
+      ctx.lineWidth = 1.4;
+      ctx.stroke();
+    }
+  }
+
+  /** Nodes arranged in a ring, joined by lines that light up with the beat. */
+  _drawWeb(ctx, w, h, o, n, cx, cy) {
+    const s = o.settings;
+    const bins = o.bins;
+    const nodes = Math.max(12, Math.min(48, Math.round(n * 0.5)));
+    const baseR = Math.min(w, h) * 0.3;
+    const points = [];
+    for (let i = 0; i < nodes; i++) {
+      const a = (i / nodes) * Math.PI * 2 + o.t * s.spin * 0.4;
+      const v = bins[Math.floor((i / nodes) * n)] || 0;
+      const r = baseR * (0.62 + v * 0.7);
+      points.push({ x: cx + Math.cos(a) * r, y: cy + Math.sin(a) * r, v });
+    }
+    ctx.globalAlpha = 0.28 + o.energy * 0.4;
+    for (let i = 0; i < nodes; i++) {
+      const a = points[i];
+      const b = points[(i + 3) % nodes];
+      ctx.strokeStyle = this.bandColor(s, i, nodes, 0.7);
+      ctx.lineWidth = 1 + a.v * 2;
+      ctx.beginPath();
+      ctx.moveTo(a.x, a.y);
+      ctx.lineTo(b.x, b.y);
+      ctx.stroke();
+    }
+    ctx.globalAlpha = 1;
+    for (let i = 0; i < nodes; i++) {
+      ctx.fillStyle = this.bandColor(s, i, nodes, 0.95);
+      ctx.beginPath();
+      ctx.arc(points[i].x, points[i].y, 2 + points[i].v * 5, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  }
+
+  /** Grid of cells that flash on transients. */
+  _drawStrobe(ctx, w, h, o, n) {
+    const s = o.settings;
+    const bins = o.bins;
+    const cols = 12;
+    const rows = 7;
+    const cw = w / cols;
+    const ch = h / rows;
+    for (let row = 0; row < rows; row++) {
+      for (let col = 0; col < cols; col++) {
+        const v = bins[(row * cols + col) % n] || 0;
+        const flash = v > 0.55 ? (v - 0.55) / 0.45 : 0;
+        ctx.globalAlpha = 0.06 + flash * 0.9;
+        ctx.fillStyle = this.bandColor(s, col + row, cols + rows, 1);
+        ctx.fillRect(col * cw + 2, row * ch + 2, cw - 4, ch - 4);
+      }
+    }
+    ctx.globalAlpha = 1;
+  }
+
+  /**
+   * Offscreen buffer used by the effects that have to read back the frame:
+   * chromatic aberration, kaleidoscope, trails and scanlines.
+   *
+   * Resized lazily to match the canvas so a resolution change is picked up
+   * without the caller having to tell the renderer about it.
+   */
+  _buffer(w, h) {
+    if (!this._fx) this._fx = document.createElement('canvas');
+    if (this._fx.width !== w || this._fx.height !== h) {
+      this._fx.width = w;
+      this._fx.height = h;
+    }
+    return this._fx;
+  }
+
+  /**
+   * Apply the post-processing stack.
+   *
+   * Trails and kaleidoscope have to sample the frame that was just drawn, so
+   * everything happens through an offscreen buffer. Each effect is skipped
+   * entirely when its amount is zero, which keeps the default path free of any
+   * extra work.
+   */
+  _applyEffects(ctx, w, h, o) {
+    const s = o.settings;
+    const hasKaleido = s.kaleido >= 1;
+    const hasChroma = s.chroma > 0;
+    const hasScan = s.scanlines > 0;
+
+    // Accumulate a fading copy of the previous frame before anything samples it.
+    if (s.trail > 0 && !o.freezeMotion) {
+      if (!this._trail) this._trail = document.createElement('canvas');
+      if (this._trail.width !== w || this._trail.height !== h) {
+        this._trail.width = w;
+        this._trail.height = h;
+        this._trail.getContext('2d').clearRect(0, 0, w, h);
+      }
+      const tctx = this._trail.getContext('2d');
+      tctx.save();
+      // Decay what is already there, then stamp the fresh frame on top.
+      tctx.globalCompositeOperation = 'source-over';
+      tctx.globalAlpha = 1 - s.trail;
+      tctx.drawImage(this._trail, 0, 0);
+      tctx.globalAlpha = 1;
+      tctx.restore();
+      tctx.globalCompositeOperation = 'source-over';
+      tctx.drawImage(ctx.canvas, 0, 0);
+      ctx.save();
+      ctx.globalAlpha = s.trail;
+      ctx.drawImage(this._trail, 0, 0);
+      ctx.restore();
+    }
+
+    if (!hasKaleido && !hasChroma && !hasScan) return;
+
+    const buf = this._buffer(w, h);
+    const bctx = buf.getContext('2d');
+    bctx.clearRect(0, 0, w, h);
+    bctx.drawImage(ctx.canvas, 0, 0);
+
+    // Kaleidoscope: mirror wedges taken from the centre of the frame.
+    if (hasKaleido) {
+      const wedges = Math.round(clamp(s.kaleido, 1, 12));
+      ctx.save();
+      ctx.setTransform(1, 0, 0, 1, 0, 0);
+      ctx.globalAlpha = 1;
+      ctx.fillStyle = BACKGROUND;
+      ctx.fillRect(0, 0, w, h);
+      const radius = Math.hypot(w, h);
+      const step = (Math.PI * 2) / wedges;
+      for (let i = 0; i < wedges; i++) {
+        ctx.save();
+        ctx.translate(w / 2, h / 2);
+        ctx.rotate(step * i);
+        ctx.beginPath();
+        ctx.moveTo(0, 0);
+        ctx.arc(0, 0, radius, -step / 2, step / 2);
+        ctx.closePath();
+        ctx.clip();
+        if (i % 2) ctx.scale(1, -1);
+        ctx.drawImage(buf, -w / 2, -h / 2);
+        ctx.restore();
+      }
+      ctx.restore();
+      // Refresh the buffer so chromatic aberration sees the mirrored frame.
+      bctx.clearRect(0, 0, w, h);
+      bctx.drawImage(ctx.canvas, 0, 0);
+    }
+
+    // Chromatic aberration: isolate each colour channel and offset it.
+    if (hasChroma) {
+      const shifted = this._channel(w, h, buf, 0, -s.chroma);
+      const shiftedB = this._channel(w, h, buf, 2, s.chroma);
+      const green = this._channel(w, h, buf, 1, 0);
+      ctx.save();
+      ctx.setTransform(1, 0, 0, 1, 0, 0);
+      ctx.fillStyle = BACKGROUND;
+      ctx.fillRect(0, 0, w, h);
+      ctx.globalCompositeOperation = 'lighter';
+      ctx.drawImage(shifted, 0, 0);
+      ctx.drawImage(green, 0, 0);
+      ctx.drawImage(shiftedB, 0, 0);
+      ctx.restore();
+      bctx.clearRect(0, 0, w, h);
+      bctx.drawImage(ctx.canvas, 0, 0);
+    }
+
+    // Scanlines: dark horizontal bands with a slow roll.
+    if (hasScan) {
+      ctx.save();
+      ctx.setTransform(1, 0, 0, 1, 0, 0);
+      ctx.globalAlpha = 0.5 * s.scanlines;
+      ctx.fillStyle = '#000';
+      const gap = 4;
+      const offset = o.freezeMotion ? 0 : (o.t * 30) % gap;
+      for (let y = -gap + offset; y < h; y += gap) {
+        ctx.fillRect(0, y, w, gap / 2);
+      }
+      ctx.restore();
+    }
+  }
+
+  /**
+   * Build a single-colour-channel copy of the frame, shifted horizontally.
+   *
+   * Used by chromatic aberration. The channel is isolated by multiplying the
+   * frame with a solid primary using `multiply`, then the alpha is carried over
+   * from the source with `destination-in`.
+   *
+   * @param {number} channel 0 red, 1 green, 2 blue
+   * @param {number} dx horizontal offset in pixels
+   */
+  _channel(w, h, source, channel, dx) {
+    if (!this._channels) this._channels = [null, null, null];
+    if (!this._channels[channel]) {
+      const c = document.createElement('canvas');
+      c.width = w;
+      c.height = h;
+      this._channels[channel] = { canvas: c, tint: TINTS[channel] };
+    }
+    const entry = this._channels[channel];
+    const c = entry.canvas;
+    if (c.width !== w || c.height !== h) {
+      c.width = w;
+      c.height = h;
+    }
+    const cc = c.getContext('2d');
+    cc.setTransform(1, 0, 0, 1, 0, 0);
+    cc.globalCompositeOperation = 'source-over';
+    cc.clearRect(0, 0, w, h);
+    cc.drawImage(source, dx, 0);
+    cc.globalCompositeOperation = 'multiply';
+    cc.fillStyle = entry.tint;
+    cc.fillRect(0, 0, w, h);
+    cc.globalCompositeOperation = 'destination-in';
+    cc.drawImage(source, dx, 0);
+    cc.globalCompositeOperation = 'source-over';
+    return c;
+  }
+
   _drawVignette(ctx, w, h) {
     const g = ctx.createRadialGradient(w / 2, h / 2, Math.min(w, h) * 0.3, w / 2, h / 2, Math.max(w, h) * 0.75);
     g.addColorStop(0, 'rgba(0,0,0,0)');
@@ -652,10 +1143,19 @@ export class Renderer {
     ctx.fillStyle = BACKGROUND;
     ctx.fillRect(0, 0, w, h);
 
-    const pulse = 1 + s.screenPulse * o.bass + (s.beatScale ? o.beat * 0.03 : 0);
+    // Screen pulse, beat zoom and auto spin all compose into one transform so
+    // they stack predictably instead of fighting over setTransform.
+    const pulse = 1 + s.screenPulse * o.bass + (s.beatScale ? o.beat * (s.beatZoom ?? 0.03) : 0);
     ctx.translate(w / 2, h / 2);
     ctx.scale(pulse, pulse);
+    if (s.spin) ctx.rotate(s.spin * o.t * 0.25);
     ctx.translate(-w / 2, -h / 2);
+
+    // Glow flares with the beat when asked, otherwise holds steady.
+    const baseGlow = s.glow;
+    if (s.glowPulse > 0) {
+      o = { ...o, settings: { ...s, glow: baseGlow * (1 + s.glowPulse * o.beat * 1.6 + s.glowPulse * o.bass * 0.4) } };
+    }
 
     this._drawBackdrop(ctx, w, h, o);
     if (s.elGhostBars) this._drawGhostBars(ctx, w, h, o);
@@ -687,6 +1187,7 @@ export class Renderer {
 
     if (s.screenFlash > 0 && o.beat > 0.02) {
       ctx.save();
+      ctx.setTransform(1, 0, 0, 1, 0, 0);
       ctx.globalAlpha = clamp(s.screenFlash * o.beat, 0, 1);
       ctx.fillStyle = s.color2;
       ctx.fillRect(0, 0, w, h);
@@ -694,5 +1195,8 @@ export class Renderer {
     }
 
     ctx.restore();
+
+    // Effects run outside the content transform so they sample the whole frame.
+    this._applyEffects(ctx, w, h, o);
   }
 }
