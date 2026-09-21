@@ -113,6 +113,11 @@ class App {
 
     $('#btnPlay').addEventListener('click', () => this.togglePlay());
     $('#btnStop').addEventListener('click', () => this.stopPlayback());
+    $('#btnStagePlay').addEventListener('click', () => this.togglePlay());
+    // Clicking the artwork itself is the fastest way to start or stop.
+    this.canvas.addEventListener('click', () => {
+      if (this.trackName) this.togglePlay();
+    });
     $('#btnClearAudio').addEventListener('click', () => this.runAction('clearAudio'));
 
     $('#previewFit').addEventListener('change', (e) => {
@@ -410,6 +415,9 @@ class App {
     $('#emptyState').hidden = has;
     $('#btnPlay').disabled = !has;
     $('#btnStop').disabled = !has;
+    // The preview overlay only makes sense once there is something to play.
+    $('#btnStagePlay').hidden = !has;
+    this.canvas.classList.toggle('is-live', has);
     $('#trackName').textContent = this.trackName || '—';
     const buffer = this.audio.buffer;
     $('#trackMeta').textContent = buffer
@@ -426,6 +434,7 @@ class App {
     this.peaks = null;
     this.timeline.setPeaks(null, 0);
     this.timeline.setMarkers([]);
+    this.reflectPlayState(false);
     this.refreshAudioChrome();
     this.setStatus('idle', 'Ready');
     this.draw();
@@ -436,6 +445,12 @@ class App {
 
   async togglePlay() {
     if (!this.trackName) return;
+    // The exporter drives playback itself; letting a stray click pause it would
+    // truncate the recording.
+    if (this.exporter.recording) {
+      this.ui.toast('Export in progress — stop the recording to take control again', 'warn');
+      return;
+    }
     if (this.audio.playing) this.pausePlayback();
     else await this.startPlayback();
   }
@@ -448,28 +463,44 @@ class App {
     await this.audio.play(offset);
     this.applyGain();
     this.setStatus('playing', 'Playing');
-    $('#playLabel').textContent = 'Pause';
-    $('#playIcon')?.querySelector('use')?.setAttribute('href', '#i-pause');
+    this.reflectPlayState(true);
   }
 
   pausePlayback() {
     this.audio.pause();
     this.setStatus('ready', 'Paused');
-    $('#playLabel').textContent = 'Play';
-    $('#playIcon')?.querySelector('use')?.setAttribute('href', '#i-play');
+    this.reflectPlayState(false);
   }
 
   stopPlayback() {
     this.audio.stop();
     this.setStatus('ready', 'Ready');
-    $('#playLabel').textContent = 'Play';
-    $('#playIcon')?.querySelector('use')?.setAttribute('href', '#i-play');
+    this.reflectPlayState(false);
   }
 
   onPlaybackEnded() {
     this.setStatus('ready', 'Finished');
-    $('#playLabel').textContent = 'Play';
-    $('#playIcon')?.querySelector('use')?.setAttribute('href', '#i-play');
+    this.reflectPlayState(false);
+  }
+
+  /**
+   * Push the playing state into both play controls.
+   *
+   * The transport button and the preview overlay are driven from here so they
+   * can never disagree about whether audio is running.
+   */
+  reflectPlayState(playing) {
+    $('#playLabel').textContent = playing ? 'Pause' : 'Play';
+    $('#playIcon')?.querySelector('use')?.setAttribute('href', playing ? '#i-pause' : '#i-play');
+
+    const overlay = $('#btnStagePlay');
+    if (overlay) {
+      overlay.classList.toggle('is-playing', playing);
+      overlay.setAttribute('aria-label', playing ? 'Pause preview' : 'Play preview');
+      $('#stagePlayIcon')?.setAttribute('href', playing ? '#i-pause' : '#i-play');
+      const label = $('#stagePlayLabel');
+      if (label) label.textContent = playing ? 'Pause preview' : 'Play preview';
+    }
   }
 
   onTimelineInput(value, intent) {
