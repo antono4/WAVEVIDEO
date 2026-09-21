@@ -1,0 +1,25 @@
+# OS and editor noise
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+
+# Node
+node_modules/
+npm-debug.log*
+
+# Local test scaffolding and media used while developing
+test.html
+probe*.html
+rectest.html
+*.local.js
+*.log
+
+# Media that should never be committed in bulk
+*.mp3
+*.wav
+*.flac
+*.m4a
+*.mp4
+*.webm

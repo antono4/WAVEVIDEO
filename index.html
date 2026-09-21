@@ -1,1837 +1,232 @@
 <!DOCTYPE html>
-<html lang="id">
+<html lang="en">
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Free Visualizer Studio — Music Visualizer &amp; Lyric Video Maker</title>
-<meta name="description" content="Buat music visualizer dan lyric video gratis langsung di browser. Tanpa upload, tanpa watermark." />
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%237c5cff'/%3E%3Cg fill='%23fff'%3E%3Crect x='6' y='12' width='3' height='8' rx='1.5'/%3E%3Crect x='12' y='7' width='3' height='18' rx='1.5'/%3E%3Crect x='18' y='10' width='3' height='12' rx='1.5'/%3E%3Crect x='24' y='14' width='3' height='4' rx='1.5'/%3E%3C/g%3E%3C/svg%3E" />
-<style>
-  :root{
-    --bg:#0b0c12;
-    --panel:#12141d;
-    --panel-2:#171a26;
-    --line:#262a38;
-    --text:#eef0f7;
-    --muted:#8f96ad;
-    --accent:#7c5cff;
-    --accent-2:#00d1b2;
-    --danger:#ff5c72;
-    --radius:12px;
-    --sidebar:300px;
-  }
-  *{box-sizing:border-box}
-  html,body{height:100%}
-  body{
-    margin:0;
-    background:var(--bg);
-    color:var(--text);
-    font:14px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,Inter,sans-serif;
-    overflow:hidden;
-  }
-  button,input,select,textarea{font:inherit;color:inherit}
-  button{cursor:pointer}
-
-  /* ---------- top bar ---------- */
-  .topbar{
-    height:54px;display:flex;align-items:center;gap:12px;padding:0 14px;
-    background:linear-gradient(180deg,#161925,#12141d);
-    border-bottom:1px solid var(--line);
-  }
-  .brand{display:flex;align-items:center;gap:9px;font-weight:700;letter-spacing:.2px}
-  .brand svg{flex:0 0 auto}
-  .brand small{display:block;font-weight:500;font-size:10.5px;color:var(--muted);letter-spacing:.4px;text-transform:uppercase}
-  .topbar .file-name{
-    margin-left:8px;color:var(--muted);font-size:12.5px;max-width:280px;overflow:hidden;
-    text-overflow:ellipsis;white-space:nowrap;
-  }
-  .spacer{flex:1}
-  .chip-free{
-    font-size:11px;font-weight:700;letter-spacing:.4px;padding:4px 9px;border-radius:999px;
-    color:#08110f;background:var(--accent-2);text-transform:uppercase;
-  }
-
-  /* ---------- buttons ---------- */
-  .btn{
-    display:inline-flex;align-items:center;justify-content:center;gap:7px;
-    border:1px solid var(--line);background:var(--panel-2);color:var(--text);
-    padding:8px 13px;border-radius:9px;transition:.15s;white-space:nowrap;
-  }
-  .btn:hover:not(:disabled){border-color:#3a4159;background:#1e2231}
-  .btn:disabled{opacity:.42;cursor:not-allowed}
-  .btn.primary{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:600}
-  .btn.primary:hover:not(:disabled){background:#8b6dff;border-color:#8b6dff}
-  .btn.ghost{background:transparent}
-  .btn.small{padding:5px 9px;font-size:12px;border-radius:7px}
-  .btn.danger{color:var(--danger);border-color:#40222b}
-  .btn.rec{background:var(--danger);border-color:var(--danger);color:#fff;font-weight:600}
-
-  /* ---------- layout ---------- */
-  .app{display:flex;height:calc(100% - 54px)}
-  .sidebar{
-    width:var(--sidebar);flex:0 0 var(--sidebar);background:var(--panel);
-    border-right:1px solid var(--line);display:flex;flex-direction:column;overflow:hidden;
-  }
-  .tabs{display:flex;flex-wrap:wrap;gap:2px;padding:6px;border-bottom:1px solid var(--line);background:#0f1118}
-  .tabs button{
-    flex:1 1 auto;padding:7px 8px;border:0;background:transparent;color:var(--muted);
-    border-radius:7px;font-size:12px;font-weight:600;
-  }
-  .tabs button:hover{color:var(--text);background:#191c28}
-  .tabs button.active{color:#fff;background:var(--accent)}
-  .panes{flex:1;overflow-y:auto;padding:14px}
-  .pane{display:none;flex-direction:column;gap:16px}
-  .pane.active{display:flex}
-  fieldset{border:0;padding:0;margin:0;display:flex;flex-direction:column;gap:8px}
-  .group{border:1px solid var(--line);border-radius:var(--radius);padding:12px;background:var(--panel-2);display:flex;flex-direction:column;gap:11px}
-  .group > h3{margin:0;font-size:11px;letter-spacing:.9px;text-transform:uppercase;color:var(--muted);font-weight:700}
-  label.field{display:flex;flex-direction:column;gap:5px;font-size:12px;color:var(--muted)}
-  label.row{display:flex;align-items:center;justify-content:space-between;gap:10px;font-size:12.5px}
-  input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:20px;background:transparent;margin:0}
-  input[type=range]::-webkit-slider-runnable-track{height:5px;border-radius:3px;background:#2b3042}
-  input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:15px;height:15px;margin-top:-5px;border-radius:50%;background:var(--accent);border:2px solid #fff2}
-  input[type=range]::-moz-range-track{height:5px;border-radius:3px;background:#2b3042}
-  input[type=range]::-moz-range-thumb{width:13px;height:13px;border:2px solid #fff2;border-radius:50%;background:var(--accent)}
-  input[type=text],input[type=number],select,textarea{
-    background:#0d0f16;border:1px solid var(--line);border-radius:8px;padding:8px 9px;width:100%;
-  }
-  textarea{resize:vertical;min-height:110px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12.5px;line-height:1.5}
-  input[type=color]{
-    width:100%;height:34px;padding:2px;background:#0d0f16;border:1px solid var(--line);border-radius:8px;cursor:pointer;
-  }
-  input[type=checkbox]{width:16px;height:16px;accent-color:var(--accent)}
-  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:9px}
-  .hint{font-size:11.5px;color:var(--muted);line-height:1.5;margin:0}
-  .swatches{display:grid;grid-template-columns:repeat(8,1fr);gap:5px}
-  .swatches i{display:block;aspect-ratio:1;border-radius:5px;border:1px solid #ffffff1f;cursor:pointer}
-  .swatches i:hover{transform:scale(1.12)}
-
-  /* preset cards */
-  .presets{display:grid;grid-template-columns:1fr 1fr;gap:9px}
-  .preset{
-    border:1px solid var(--line);background:#0f1118;border-radius:10px;padding:9px;text-align:left;
-    display:flex;flex-direction:column;gap:6px;
-  }
-  .preset:hover{border-color:var(--accent)}
-  .preset .pv{height:44px;border-radius:6px;overflow:hidden}
-  .preset span{font-size:12px;font-weight:600}
-  .lyric-block{
-    border:1px solid var(--line);border-radius:9px;padding:9px;display:flex;flex-direction:column;gap:6px;background:#0f1118;
-  }
-  .lyric-block header{display:flex;align-items:center;justify-content:space-between;font-size:11.5px;color:var(--muted)}
-
-  /* ---------- stage ---------- */
-  .stage{flex:1;display:flex;flex-direction:column;min-width:0;background:#080910}
-  .stage-head{display:flex;align-items:center;gap:10px;padding:8px 14px;border-bottom:1px solid var(--line);flex-wrap:wrap}
-  .stage-head .label{font-size:11.5px;color:var(--muted)}
-  .canvas-wrap{
-    flex:1;display:flex;align-items:center;justify-content:center;padding:18px;min-height:0;position:relative;
-  }
-  #stage{max-width:100%;max-height:100%;border-radius:10px;background:#000;box-shadow:0 18px 50px #0009}
-  .stage-foot{padding:10px 14px 14px;border-top:1px solid var(--line);display:flex;flex-direction:column;gap:9px}
-  .transport{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
-  .time{font-variant-numeric:tabular-nums;font-size:12.5px;color:var(--muted);min-width:96px}
-  .seek-wrap{flex:1;display:flex;align-items:center;min-width:140px}
-  .status{font-size:12px;color:var(--muted);display:flex;align-items:center;gap:8px}
-
-  /* ---------- modal ---------- */
-  .modal{position:fixed;inset:0;background:#000a;backdrop-filter:blur(4px);display:none;align-items:center;justify-content:center;z-index:60;padding:20px}
-  .modal.open{display:flex}
-  .modal .card{background:var(--panel);border:1px solid var(--line);border-radius:16px;max-width:640px;width:100%;padding:22px}
-  .modal h2{margin:0 0 6px;font-size:19px}
-  .modal ol{margin:12px 0 0;padding-left:20px;color:var(--muted);font-size:13px;line-height:1.7}
-  .modal .foot{display:flex;justify-content:flex-end;gap:9px;margin-top:18px}
-  .bar{height:6px;border-radius:99px;background:#22273a;overflow:hidden;margin-top:12px;display:none}
-  .bar.show{display:block}
-  .bar i{display:block;height:100%;width:0;background:var(--accent-2)}
-  .drop{
-    border:1.5px dashed #333a52;border-radius:var(--radius);padding:16px;text-align:center;color:var(--muted);
-    font-size:12.5px;transition:.15s;cursor:pointer;
-  }
-  .drop:hover,.drop.over{border-color:var(--accent);color:var(--text);background:#7c5cff11}
-  kbd{background:#22273a;border-radius:5px;padding:1px 5px;font-size:11px;border:1px solid #333a52}
-  .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
-  @media (max-width:900px){
-    body{overflow:auto}
-    .app{flex-direction:column;height:auto}
-    .sidebar{width:100%;flex:1 1 auto;border-right:0;border-bottom:1px solid var(--line)}
-    .panes{max-height:none}
-    .canvas-wrap{min-height:52vh}
-  }
-</style>
+<title>Wavevideo Studio — Music Visualizer &amp; Lyric Video Maker</title>
+<meta name="description" content="Create music visualizer and lyric videos in your browser. Free, private, no upload, no watermark, no build step." />
+<meta name="color-scheme" content="dark" />
+<meta property="og:title" content="Wavevideo Studio" />
+<meta property="og:description" content="Create music visualizer and lyric videos in your browser. Free, private, no watermark." />
+<meta property="og:type" content="website" />
+<link rel="icon" href="assets/favicon.svg" type="image/svg+xml" />
+<link rel="stylesheet" href="assets/css/app.css" />
 </head>
 <body>
 
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+  <defs>
+    <symbol id="i-wand" viewBox="0 0 24 24"><path d="M6 21 3 18 14.5 6.5l3 3L6 21Z"/><path d="M16 5.5 18.5 3 21 5.5 18.5 8 16 5.5Z"/><path d="M6 3v3M4.5 4.5h3"/></symbol>
+    <symbol id="i-audio" viewBox="0 0 24 24"><path d="M9 18V6l10-2v12"/><circle cx="6" cy="18" r="3"/><circle cx="16" cy="16" r="3"/></symbol>
+    <symbol id="i-wave" viewBox="0 0 24 24"><path d="M2 12h2M6 8v8M10 4v16M14 7v10M18 10v4"/></symbol>
+    <symbol id="i-image" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="8.5" cy="9.5" r="1.5"/><path d="m4 17 5-5 4 4 3-3 4 4"/></symbol>
+    <symbol id="i-type" viewBox="0 0 24 24"><path d="M4 6h16M9 6v13M15 6v13"/></symbol>
+    <symbol id="i-lyrics" viewBox="0 0 24 24"><path d="M4 6h11M4 11h16M4 16h9"/><circle cx="19" cy="15" r="2"/><path d="M21 15V8l-4 1"/></symbol>
+    <symbol id="i-layers" viewBox="0 0 24 24"><path d="m12 3 9 5-9 5-9-5 9-5Z"/><path d="m3 13 9 5 9-5"/></symbol>
+    <symbol id="i-export" viewBox="0 0 24 24"><path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M4 19h16"/></symbol>
+    <symbol id="i-play" viewBox="0 0 24 24"><path d="M8 5v14l11-7L8 5Z"/></symbol>
+    <symbol id="i-pause" viewBox="0 0 24 24"><path d="M9 5v14M15 5v14"/></symbol>
+    <symbol id="i-stop" viewBox="0 0 24 24"><rect x="7" y="7" width="10" height="10" rx="1.5"/></symbol>
+    <symbol id="i-undo" viewBox="0 0 24 24"><path d="M4 9h11a5 5 0 0 1 0 10H9"/><path d="m4 9 4-4M4 9l4 4"/></symbol>
+    <symbol id="i-redo" viewBox="0 0 24 24"><path d="M20 9H9a5 5 0 0 0 0 10h6"/><path d="m20 9-4-4M20 9l-4 4"/></symbol>
+    <symbol id="i-reset" viewBox="0 0 24 24"><path d="M20 12a8 8 0 1 1-2.3-5.6"/><path d="M20 4v4h-4"/></symbol>
+    <symbol id="i-help" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.5 2.5 0 0 1 3.2 2.4c-.7.3-.9 1-.9 1.6"/><path d="M12 17h.01"/></symbol>
+    <symbol id="i-close" viewBox="0 0 24 24"><path d="m6 6 12 12M18 6 6 18"/></symbol>
+    <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+    <symbol id="i-trash" viewBox="0 0 24 24"><path d="M4 7h16M9 7V5h6v2M6 7l1 13h10l1-13"/></symbol>
+    <symbol id="i-download" viewBox="0 0 24 24"><path d="M12 4v10"/><path d="m8 10 4 4 4-4"/><path d="M5 19h14"/></symbol>
+    <symbol id="i-upload" viewBox="0 0 24 24"><path d="M12 20V10"/><path d="m8 14 4-4 4 4"/><path d="M5 5h14"/></symbol>
+    <symbol id="i-palette" viewBox="0 0 24 24"><path d="M12 3a9 9 0 1 0 0 18c1.7 0 2-1.3 1.2-2.2-.9-1 .1-2.3 1.4-2.3H17a4 4 0 0 0 4-4c0-5.2-4-9.5-9-9.5Z"/><circle cx="8" cy="10" r="1"/><circle cx="12" cy="7.5" r="1"/><circle cx="16" cy="10" r="1"/></symbol>
+  </defs>
+</svg>
+
 <header class="topbar">
-  <div class="brand">
-    <svg width="26" height="26" viewBox="0 0 32 32" aria-hidden="true">
-      <rect width="32" height="32" rx="7" fill="#7c5cff"/>
-      <g fill="#fff">
-        <rect x="6" y="12" width="3" height="8" rx="1.5"/>
-        <rect x="12" y="7" width="3" height="18" rx="1.5"/>
-        <rect x="18" y="10" width="3" height="12" rx="1.5"/>
-        <rect x="24" y="14" width="3" height="4" rx="1.5"/>
-      </g>
-    </svg>
-    <div>Free Visualizer Studio<small>Music Visualizer &amp; Lyric Video</small></div>
+  <a class="brand" href="./" aria-label="Wavevideo Studio home">
+    <span class="brand-mark">
+      <svg viewBox="0 0 32 32" width="30" height="30" aria-hidden="true">
+        <rect width="32" height="32" rx="9" fill="url(#brandGrad)"/>
+        <defs><linearGradient id="brandGrad" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0" stop-color="#8b5cf6"/><stop offset="1" stop-color="#06b6d4"/>
+        </linearGradient></defs>
+        <g fill="#fff">
+          <rect x="6.5" y="13" width="2.6" height="6" rx="1.3"/>
+          <rect x="11.5" y="8" width="2.6" height="16" rx="1.3"/>
+          <rect x="16.5" y="10.5" width="2.6" height="11" rx="1.3"/>
+          <rect x="21.5" y="14.5" width="2.6" height="3" rx="1.3"/>
+        </g>
+      </svg>
+    </span>
+    <span class="brand-text">
+      <strong>Wavevideo<span class="brand-dot">.</span>Studio</strong>
+      <small>Music Visualizer &amp; Lyric Video</small>
+    </span>
+  </a>
+
+  <div class="track" id="trackChip" hidden>
+    <span class="track-dot" aria-hidden="true"></span>
+    <span class="track-name" id="trackName">—</span>
+    <span class="track-meta" id="trackMeta"></span>
+    <button class="icon-btn" id="btnClearAudio" title="Remove audio" aria-label="Remove audio">
+      <svg class="ico" aria-hidden="true"><use href="#i-close"/></svg>
+    </button>
   </div>
-  <span class="chip-free">100% Gratis</span>
-  <span class="file-name" id="fileName">Belum ada audio</span>
+
   <span class="spacer"></span>
-  <button class="btn ghost" id="btnHelp">Cara pakai</button>
-  <button class="btn ghost" id="btnReset">Reset</button>
-  <button class="btn primary" id="btnExportVideo">Export Video</button>
-  <button class="btn" id="btnExportPng">Frame PNG</button>
+
+  <div class="top-actions">
+    <span class="badge-free" title="No account, no upload, no watermark">Open source</span>
+    <div class="group-btns" role="group" aria-label="Undo and redo">
+      <button class="btn ghost icon-only" id="btnUndo" title="Undo (Ctrl+Z)" aria-label="Undo" disabled>
+        <svg class="ico" aria-hidden="true"><use href="#i-undo"/></svg>
+      </button>
+      <button class="btn ghost icon-only" id="btnRedo" title="Redo (Ctrl+Shift+Z)" aria-label="Redo" disabled>
+        <svg class="ico" aria-hidden="true"><use href="#i-redo"/></svg>
+      </button>
+    </div>
+    <button class="btn ghost" id="btnReset" title="Reset everything to defaults">
+      <svg class="ico" aria-hidden="true"><use href="#i-reset"/></svg><span>Reset</span>
+    </button>
+    <button class="btn ghost icon-only" id="btnHelp" title="Guide and shortcuts" aria-label="Help">
+      <svg class="ico" aria-hidden="true"><use href="#i-help"/></svg>
+    </button>
+    <button class="btn primary" id="btnExport">
+      <svg class="ico" aria-hidden="true"><use href="#i-export"/></svg><span>Export</span>
+    </button>
+  </div>
 </header>
 
 <div class="app">
-  <!-- ================= SIDEBAR ================= -->
-  <aside class="sidebar">
-    <nav class="tabs" id="tabs">
-      <button data-pane="preset" class="active">Preset</button>
-      <button data-pane="audio">Audio</button>
-      <button data-pane="visualizer">Visualizer</button>
-      <button data-pane="backdrop">Backdrop</button>
-      <button data-pane="text">Text</button>
-      <button data-pane="lyrics">Lyrics</button>
-      <button data-pane="elements">Elements</button>
-      <button data-pane="export">Export</button>
-    </nav>
+  <nav class="rail" id="rail" aria-label="Editor sections">
+    <button class="rail-btn is-active" data-section="presets" title="Presets">
+      <svg class="ico" aria-hidden="true"><use href="#i-wand"/></svg><span>Presets</span>
+    </button>
+    <button class="rail-btn" data-section="audio" title="Audio">
+      <svg class="ico" aria-hidden="true"><use href="#i-audio"/></svg><span>Audio</span>
+    </button>
+    <button class="rail-btn" data-section="visualizer" title="Visualizer">
+      <svg class="ico" aria-hidden="true"><use href="#i-wave"/></svg><span>Visual</span>
+    </button>
+    <button class="rail-btn" data-section="backdrop" title="Backdrop">
+      <svg class="ico" aria-hidden="true"><use href="#i-image"/></svg><span>Backdrop</span>
+    </button>
+    <button class="rail-btn" data-section="titles" title="Titles">
+      <svg class="ico" aria-hidden="true"><use href="#i-type"/></svg><span>Titles</span>
+    </button>
+    <button class="rail-btn" data-section="lyrics" title="Lyrics">
+      <svg class="ico" aria-hidden="true"><use href="#i-lyrics"/></svg><span>Lyrics</span>
+    </button>
+    <button class="rail-btn" data-section="elements" title="Elements">
+      <svg class="ico" aria-hidden="true"><use href="#i-layers"/></svg><span>Layers</span>
+    </button>
+    <button class="rail-btn" data-section="export" title="Export">
+      <svg class="ico" aria-hidden="true"><use href="#i-export"/></svg><span>Export</span>
+    </button>
+  </nav>
 
-    <div class="panes">
-      <!-- ---------- PRESET ---------- -->
-      <section class="pane active" data-pane="preset">
-        <div class="group">
-          <h3>Preset siap pakai</h3>
-          <p class="hint">Klik preset untuk langsung menerapkan gaya, warna, dan efek. Audio kamu tidak berubah.</p>
-          <div class="presets" id="presetGrid"></div>
-        </div>
-        <div class="group">
-          <h3>Tip</h3>
-          <p class="hint">Semua proses berjalan di browser kamu. File audio tidak pernah diunggah ke server mana pun.</p>
-        </div>
-      </section>
-
-      <!-- ---------- AUDIO ---------- -->
-      <section class="pane" data-pane="audio">
-        <div class="group">
-          <h3>Sumber audio</h3>
-          <div class="drop" id="drop">Klik atau taruh file audio di sini<br><span style="font-size:11px">MP3 / WAV / OGG / M4A / FLAC</span></div>
-          <input id="audioFile" type="file" accept="audio/*" class="sr" />
-          <label class="field">URL audio (opsional)
-            <div style="display:flex;gap:7px">
-              <input id="audioUrl" type="text" placeholder="https://contoh.com/lagu.mp3" />
-              <button class="btn small" id="btnLoadUrl" style="flex:0 0 auto">Muat</button>
-            </div>
-          </label>
-          <p class="hint" id="audioInfo">Belum ada audio yang dimuat.</p>
-        </div>
-        <div class="group">
-          <h3>Pemrosesan</h3>
-          <label class="row">Volume
-            <input type="range" id="volume" min="0" max="1" step="0.01" value="1" style="max-width:150px" />
-          </label>
-          <label class="row">Fade in (detik)
-            <input type="range" id="fadeIn" min="0" max="8" step="0.1" value="0" style="max-width:150px" />
-          </label>
-          <label class="row">Fade out (detik)
-            <input type="range" id="fadeOut" min="0" max="8" step="0.1" value="0" style="max-width:150px" />
-          </label>
-        </div>
-      </section>
-
-      <!-- ---------- VISUALIZER ---------- -->
-      <section class="pane" data-pane="visualizer">
-        <div class="group">
-          <h3>Tipe visualizer</h3>
-          <label class="field">Gaya
-            <select id="visType">
-              <option value="bars">Bars (kolom)</option>
-              <option value="barsMirror">Bars Mirror</option>
-              <option value="wave">Waveform garis</option>
-              <option value="waveFill">Waveform terisi</option>
-              <option value="blocks">Blocks</option>
-              <option value="dots">Dot matrix</option>
-              <option value="circular">Circular bars</option>
-              <option value="radial">Radial wave</option>
-              <option value="rings">Pulse rings</option>
-              <option value="led">LED meter</option>
-              <option value="mirrorSym">Mirror simetris</option>
-              <option value="spectrum">Spectrum area</option>
-            </select>
-          </label>
-          <div class="grid2">
-            <label class="row">Bars<input type="range" id="barCount" min="12" max="128" step="1" value="64" style="max-width:92px" /></label>
-            <label class="row">Smooth<input type="range" id="smoothing" min="0" max="0.95" step="0.01" value="0.78" style="max-width:92px" /></label>
-            <label class="row">Bobot bas<input type="range" id="bassBoost" min="0" max="2" step="0.05" value="0.15" style="max-width:92px" /></label>
-            <label class="row">Level<input type="range" id="gain" min="0.2" max="3" step="0.05" value="1" style="max-width:92px" /></label>
-            <label class="row">Glow<input type="range" id="glow" min="0" max="40" step="1" value="18" style="max-width:92px" /></label>
-            <label class="row">Mirror<input type="checkbox" id="mirrorOn" /></label>
-            <label class="row">Scale on beat<input type="checkbox" id="beatScale" checked /></label>
-            <label class="row">Rotasi<input type="range" id="rotation" min="-3" max="3" step="0.05" value="0" style="max-width:92px" /></label>
-          </div>
-        </div>
-        <div class="group">
-          <h3>Warna</h3>
-          <label class="field">Mode warna
-            <select id="colorMode">
-              <option value="gradient">Gradient (warna 1 → warna 2)</option>
-              <option value="solid">Solid (warna 1)</option>
-              <option value="rainbow">Rainbow</option>
-              <option value="fire">Fire</option>
-              <option value="ice">Ice</option>
-              <option value="neon">Neon</option>
-            </select>
-          </label>
-          <div class="grid2">
-            <label class="field">Warna 1<input type="color" id="color1" value="#7c5cff" /></label>
-            <label class="field">Warna 2<input type="color" id="color2" value="#00d1b2" /></label>
-          </div>
-          <div class="swatches" id="swatches"></div>
-        </div>
-      </section>
-
-      <!-- ---------- BACKDROP ---------- -->
-      <section class="pane" data-pane="backdrop">
-        <div class="group">
-          <h3>Latar belakang</h3>
-          <label class="field">Tipe
-            <select id="bgType">
-              <option value="solid">Warna solid</option>
-              <option value="linear">Gradient linear</option>
-              <option value="radial">Gradient radial</option>
-              <option value="image">Gambar</option>
-              <option value="video">Video</option>
-            </select>
-          </label>
-          <div class="grid2">
-            <label class="field">Warna atas<input type="color" id="bgColor1" value="#0a0b12" /></label>
-            <label class="field">Warna bawah<input type="color" id="bgColor2" value="#241a46" /></label>
-          </div>
-          <label class="row">Sudut gradient<input type="range" id="bgAngle" min="0" max="360" step="1" value="160" style="max-width:150px" /></label>
-          <label class="field">Gambar / Video
-            <input id="bgFile" type="file" accept="image/*,video/*" />
-          </label>
-          <div class="grid2">
-            <button class="btn small" id="btnBgClear">Hapus media</button>
-            <label class="row">Blur<input type="range" id="bgBlur" min="0" max="30" step="1" value="0" style="max-width:92px" /></label>
-            <label class="row">Zoom<input type="range" id="bgZoom" min="100" max="250" step="1" value="115" style="max-width:92px" /></label>
-            <label class="row">Gerak lambat<input type="checkbox" id="bgMotion" checked /></label>
-          </div>
-          <label class="field">Overlay gelap
-            <input type="range" id="bgDim" min="0" max="0.85" step="0.01" value="0.25" />
-          </label>
-          <label class="row">Vinette<input type="checkbox" id="vignette" checked /></label>
-        </div>
-        <div class="group">
-          <h3>Reaktif audio untuk layar penuh</h3>
-          <label class="row">Flash on beat<input type="range" id="screenFlash" min="0" max="0.6" step="0.02" value="0" style="max-width:120px" /></label>
-          <label class="row">Pulse zoom<input type="range" id="screenPulse" min="0" max="0.25" step="0.01" value="0.06" style="max-width:120px" /></label>
-        </div>
-      </section>
-
-      <!-- ---------- TEXT ---------- -->
-      <section class="pane" data-pane="text">
-        <div class="group">
-          <h3>Judul</h3>
-          <label class="field">Teks<input type="text" id="titleText" value="JUDUL LAGU" /></label>
-          <div class="grid2">
-            <label class="field">Font
-              <select id="titleFont">
-                <option>Inter, system-ui, sans-serif</option>
-                <option>Arial Black, Arial, sans-serif</option>
-                <option>Georgia, serif</option>
-                <option>'Times New Roman', serif</option>
-                <option>Impact, Charcoal, sans-serif</option>
-                <option>'Courier New', monospace</option>
-                <option>Verdana, sans-serif</option>
-                <option>'Trebuchet MS', sans-serif</option>
-              </select>
-            </label>
-            <label class="field">Ukuran<input type="range" id="titleSize" min="12" max="160" step="1" value="64" /></label>
-            <label class="field">Warna<input type="color" id="titleColor" value="#ffffff" /></label>
-            <label class="field">Posisi X<input type="range" id="titleX" min="-1" max="1" step="0.01" value="0" /></label>
-            <label class="field">Posisi Y<input type="range" id="titleY" min="-1" max="1" step="0.01" value="-0.62" /></label>
-            <label class="field">Huruf besar<input type="range" id="titleSpacing" min="0" max="20" step="0.5" value="2" /></label>
-          </div>
-          <label class="row">Shadow<input type="checkbox" id="titleShadow" checked /></label>
-        </div>
-        <div class="group">
-          <h3>Sub judul</h3>
-          <label class="field">Teks<input type="text" id="subText" value="Artist Name" /></label>
-          <div class="grid2">
-            <label class="field">Ukuran<input type="range" id="subSize" min="10" max="90" step="1" value="26" /></label>
-            <label class="field">Warna<input type="color" id="subColor" value="#cfd4e6" /></label>
-            <label class="field">Posisi X<input type="range" id="subX" min="-1" max="1" step="0.01" value="0" /></label>
-            <label class="field">Posisi Y<input type="range" id="subY" min="-1" max="1" step="0.01" value="-0.42" /></label>
-          </div>
-        </div>
-      </section>
-
-      <!-- ---------- LYRICS ---------- -->
-      <section class="pane" data-pane="lyrics">
-        <div class="group">
-          <h3>Lyric video</h3>
-          <label class="row">Aktifkan lyrik<input type="checkbox" id="lyricsOn" /></label>
-          <label class="field">Format: <code>waktu|teks</code> atau <code>waktu|teks|terjemahan</code>
-            <textarea id="lyricsText" placeholder="0:00|Intro
-0:12|Baris pertama lirik|First line of lyrics
-0:18|Baris kedua lirik"></textarea>
-          </label>
-          <div class="grid2">
-            <label class="field">Ukuran<input type="range" id="lyricSize" min="16" max="120" step="1" value="44" /></label>
-            <label class="field">Posisi Y<input type="range" id="lyricY" min="-1" max="1" step="0.01" value="0.35" /></label>
-            <label class="field">Warna aktif<input type="color" id="lyricColor" value="#ffffff" /></label>
-            <label class="field">Warna redup<input type="color" id="lyricDim" value="#ffffff" /></label>
-          </div>
-          <label class="row">Masukkan waktu saat ini<input type="checkbox" id="lyricStamped" checked></label>
-          <div style="display:flex;gap:7px;flex-wrap:wrap">
-            <button class="btn small" id="btnLyricAdd">Tambah baris sekarang</button>
-            <button class="btn small" id="btnLyricPaste">Tempel mode</button>
-            <button class="btn small danger" id="btnLyricClear">Bersihkan</button>
-          </div>
-          <p class="hint" id="lyricStatus">0 baris lirik.</p>
-        </div>
-        <div class="group">
-          <h3>Generator lirik otomatis</h3>
-          <p class="hint">Belum punya file .lrc? Tulis lirik lengkap, lalu klik generator dan studio akan membaginya otomatis sepanjang durasi lagu. Kamu bisa rapikan waktunya setelahnya.</p>
-          <label class="field">Lirik mentah<textarea id="autoLyrics" placeholder="Tulis satu baris lirik per baris..."></textarea></label>
-          <button class="btn small" id="btnAutoLyrics">Bagi otomatis merata</button>
-        </div>
-      </section>
-
-      <!-- ---------- ELEMENTS ---------- -->
-      <section class="pane" data-pane="elements">
-        <div class="group">
-          <h3>Elemen tambahan</h3>
-          <div class="grid2">
-            <label class="row">Bars latar halus<input type="checkbox" id="elGhostBars" checked /></label>
-            <label class="row">Titik partikel<input type="checkbox" id="elParticles" checked /></label>
-            <label class="row">Cincin reaktif<input type="checkbox" id="elRing" /></label>
-            <label class="row">Spectrum atas<input type="checkbox" id="elTopSpec" /></label>
-            <label class="row">Garis tengah<input type="checkbox" id="elCenterLine" /></label>
-            <label class="row">Grid gelap<input type="checkbox" id="elGrid" /></label>
-            <label class="row">Noise film<input type="checkbox" id="elNoise" /></label>
-          </div>
-          <label class="field">Opacity elemen
-            <input type="range" id="elOpacity" min="0" max="1" step="0.02" value="0.5" />
-          </label>
-        </div>
-        <div class="group">
-          <h3>Bentuk waveform</h3>
-          <label class="field">Line style
-            <select id="lineStyle">
-              <option value="smooth">Smooth curve</option>
-              <option value="sharp">Sharp</option>
-            </select>
-          </label>
-          <label class="row">Tebal garis<input type="range" id="lineWidth" min="1" max="14" step="0.5" value="3" style="max-width:150px" /></label>
-          <label class="row">Sensitivitas beat<input type="range" id="beatSensitivity" min="0.6" max="2.4" step="0.05" value="1.25" style="max-width:150px" /></label>
-        </div>
-      </section>
-
-      <!-- ---------- EXPORT ---------- -->
-      <section class="pane" data-pane="export">
-        <div class="group">
-          <h3>Format video</h3>
-          <label class="field">Resolusi
-            <select id="resPreset">
-              <option value="1280x720">Landscape 720p — 1280×720</option>
-              <option value="1920x1080" selected>Landscape 1080p — 1920×1080</option>
-              <option value="1080x1080">Square — 1080×1080</option>
-              <option value="1080x1920">Vertical 9:16 — 1080×1920</option>
-              <option value="1440x1080">4:3 — 1440×1080</option>
-              <option value="2560x1440">QHD — 2560×1440</option>
-            </select>
-          </label>
-          <label class="field">FPS
-            <select id="fps">
-              <option>24</option><option selected>30</option><option>60</option>
-            </select>
-          </label>
-          <label class="field">Bitrate video
-            <select id="bitrate">
-              <option value="4000000">4 Mbps (file kecil)</option>
-              <option value="8000000" selected>8 Mbps (seimbang)</option>
-              <option value="16000000">16 Mbps (HQ)</option>
-              <option value="26000000">26 Mbps (maksimal)</option>
-            </select>
-          </label>
-          <p class="hint">Rekaman berjalan realtime. Video 3 menit butuh sekitar 3 menit proses. Jangan tutup tab ini selama export.</p>
-          <div style="display:flex;gap:8px;flex-wrap:wrap">
-            <button class="btn primary" id="btnStartRecord">Mulai Export</button>
-            <button class="btn" id="btnStopRecord" disabled>Stop</button>
-            <button class="btn ghost" id="btnCancelRecord" disabled>Batal</button>
-          </div>
-          <div class="bar" id="recBar"><i></i></div>
-          <p class="hint" id="recStatus">Siap.</p>
-        </div>
-        <div class="group">
-          <h3>Gambar &amp; data</h3>
-          <div style="display:flex;gap:8px;flex-wrap:wrap">
-            <button class="btn small" id="btnFramePng">Simpan frame PNG</button>
-            <button class="btn small" id="btnSaveSettings">Simpan pengaturan</button>
-            <button class="btn small" id="btnLoadSettings">Muat pengaturan</button>
-            <input type="file" id="settingsFile" accept=".json" class="sr" />
-          </div>
-          <p class="hint">Pengaturan tidak memuat audio, jadi kamu bisa berbagi profil tampilan dengan orang lain.</p>
-        </div>
-        <div class="group">
-          <h3>Hasil export</h3>
-          <p class="hint" id="lastExport">Belum ada export.</p>
-          <button class="btn small" id="btnDownloadLast" disabled>Unduh hasil terakhir</button>
-        </div>
-      </section>
-    </div>
+  <aside class="inspector" id="inspector" aria-label="Inspector">
+    <header class="inspector-head">
+      <h2 id="inspectorTitle">Presets</h2>
+      <button class="icon-btn" id="btnPanelReset" title="Reset this section" aria-label="Reset this section">
+        <svg class="ico" aria-hidden="true"><use href="#i-reset"/></svg>
+      </button>
+    </header>
+    <div class="inspector-body" id="inspectorBody"></div>
   </aside>
 
-  <!-- ================= STAGE ================= -->
   <main class="stage">
     <div class="stage-head">
-      <span class="label">Preview</span>
-      <select id="previewFit" class="btn small" style="width:auto;background:#0d0f16;border:1px solid var(--line);border-radius:8px;padding:6px 9px">
-        <option value="contain">Fit</option>
-        <option value="cover">Fill</option>
-      </select>
-      <span class="label" id="canvasInfo">1920×1080 · 30 fps</span>
+      <span class="stage-label">Canvas</span>
+      <span class="pill" id="canvasInfo">1920 × 1080 · 30 fps</span>
       <span class="spacer"></span>
-      <span class="status" id="stageStatus">Siap</span>
+      <label class="mini-field">
+        <span>Fit</span>
+        <select id="previewFit">
+          <option value="contain">Contain</option>
+          <option value="cover">Cover</option>
+        </select>
+      </label>
+      <button class="btn ghost small" id="btnFullscreen" title="Fullscreen preview (F)">Fullscreen</button>
+      <span class="status-dot" id="statusDot" data-state="idle" aria-hidden="true"></span>
+      <span class="status-text" id="statusText" role="status" aria-live="polite">Ready</span>
     </div>
 
     <div class="canvas-wrap" id="canvasWrap">
-      <canvas id="stage" width="1920" height="1080" aria-label="Pratinjau visualizer"></canvas>
-    </div>
-
-    <div class="stage-foot">
-      <div class="transport">
-        <button class="btn primary" id="btnPlay" style="min-width:104px">▶ Play</button>
-        <button class="btn" id="btnStop">■ Stop</button>
-        <span class="time" id="timeLabel">0:00 / 0:00</span>
-        <div class="seek-wrap">
-          <input type="range" id="seek" min="0" max="1000" step="1" value="0" />
+      <canvas id="stage" width="1920" height="1080" aria-label="Visualizer preview"></canvas>
+      <div class="empty-state" id="emptyState">
+        <svg class="ico big" aria-hidden="true"><use href="#i-audio"/></svg>
+        <h3>Drop an audio file to start</h3>
+        <p>MP3, WAV, OGG, M4A or FLAC — decoded locally, never uploaded</p>
+        <div class="empty-actions">
+          <button class="btn primary" id="btnPickAudio">Choose audio</button>
+          <button class="btn ghost" id="btnLoadDemo">Load demo tone</button>
         </div>
       </div>
-      <div class="status">
-        <span id="hintText">Tekan <kbd>Space</kbd> untuk play/pause, <kbd>←</kbd>/<kbd>→</kbd> untuk seek 5 detik.</span>
-      </div>
+    </div>
+
+    <div class="timeline-wrap">
+      <canvas id="timeline" width="1600" height="68" aria-label="Timeline waveform"></canvas>
+      <input class="timeline-seek" id="seek" type="range" min="0" max="1000" step="1" value="0" aria-label="Seek" />
+    </div>
+
+    <div class="transport">
+      <button class="btn primary" id="btnPlay" disabled>
+        <svg class="ico" aria-hidden="true"><use href="#i-play"/></svg><span id="playLabel">Play</span>
+      </button>
+      <button class="btn ghost icon-only" id="btnStop" title="Stop" aria-label="Stop" disabled>
+        <svg class="ico" aria-hidden="true"><use href="#i-stop"/></svg>
+      </button>
+      <span class="time" id="timeLabel">0:00.0 / 0:00.0</span>
+      <span class="spacer"></span>
+      <span class="hint-inline"><kbd>Space</kbd> play · <kbd>←</kbd><kbd>→</kbd> seek · <kbd>Ctrl</kbd>+<kbd>Z</kbd> undo</span>
     </div>
   </main>
 </div>
 
-<!-- ================= HELP MODAL ================= -->
-<div class="modal" id="helpModal" role="dialog" aria-modal="true" aria-labelledby="helpTitle">
-  <div class="card">
-    <h2 id="helpTitle">Cara membuat video dalam 4 langkah</h2>
-    <p class="hint">Semua berjalan lokal di browsermu — gratis, tanpa akun, dan tanpa watermark.</p>
-    <ol>
-      <li><b>Muat audio</b> di tab Audio, atau tarik file ke panel sebelah kiri.</li>
-      <li><b>Pilih preset</b> atau atur sendiri visualizer, warna, backdrop, dan teks.</li>
-      <li>Tekan <b>Play</b> untuk melihat hasil realtime. Perbaiki sampai pas.</li>
-      <li>Buka tab <b>Export</b>, pilih resolusi, lalu klik <b>Mulai Export</b> dan tunggu sampai selesai.</li>
-    </ol>
-    <p class="hint">Untuk lyric video, aktifkan lyrik di tab Lyrics dan tulis <code>waktu|teks</code> per baris.</p>
-    <div class="foot">
-      <button class="btn" id="btnHelpClose">Mengerti</button>
+<div class="toasts" id="toasts" aria-live="polite"></div>
+
+<dialog class="modal" id="helpDialog">
+  <form method="dialog">
+    <header class="modal-head">
+      <h2>Guide &amp; shortcuts</h2>
+      <button class="icon-btn" value="close" aria-label="Close">
+        <svg class="ico" aria-hidden="true"><use href="#i-close"/></svg>
+      </button>
+    </header>
+    <div class="modal-body">
+      <ol class="steps">
+        <li><strong>Load audio</strong> — drop a file on the canvas, or open the Audio section.</li>
+        <li><strong>Pick a preset</strong> — thumbnails render with the real engine, so what you see is what you get.</li>
+        <li><strong>Fine tune</strong> — visualizer, backdrop, titles, lyrics and overlay layers.</li>
+        <li><strong>Export</strong> — choose resolution and bitrate, then record. Rendering is realtime.</li>
+      </ol>
+      <h3>Timeline</h3>
+      <p>Click anywhere on the waveform to seek. Enable trim in the Audio section to set in and out points; exports honour the trim range. Lyric timestamps show up as markers.</p>
+      <h3>Lyrics</h3>
+      <p>One line per row as <code>0:12.5|Line text|Optional translation</code>. Wrap words in <code>*asterisks*</code> for a per-word karaoke fill. Import and export standard <code>.lrc</code> files.</p>
+      <h3>Shortcuts</h3>
+      <ul class="keys">
+        <li><kbd>Space</kbd><span>Play / pause</span></li>
+        <li><kbd>←</kbd><kbd>→</kbd><span>Seek 5 s</span></li>
+        <li><kbd>Home</kbd><kbd>End</kbd><span>Jump to start / end</span></li>
+        <li><kbd>Ctrl</kbd>+<kbd>Z</kbd><span>Undo</span></li>
+        <li><kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>Z</kbd><span>Redo</span></li>
+        <li><kbd>Ctrl</kbd>+<kbd>E</kbd><span>Open export</span></li>
+        <li><kbd>Ctrl</kbd>+<kbd>S</kbd><span>Save settings JSON</span></li>
+        <li><kbd>1</kbd>…<kbd>8</kbd><span>Jump to section</span></li>
+        <li><kbd>I</kbd><span>Stamp lyric at playhead</span></li>
+        <li><kbd>F</kbd><span>Fullscreen preview</span></li>
+      </ul>
     </div>
-  </div>
-</div>
-
-<script>
-"use strict";
-(function () {
-  const $ = (id) => document.getElementById(id);
-
-  /* ==================== state ==================== */
-  const DEFAULTS = {
-    volume: 1, fadeIn: 0, fadeOut: 0,
-    visType: "bars", barCount: 64, smoothing: 0.78, bassBoost: 0.15, gain: 1,
-    glow: 18, mirrorOn: false, beatScale: true, rotation: 0,
-    colorMode: "gradient", color1: "#7c5cff", color2: "#00d1b2",
-    bgType: "linear", bgColor1: "#0a0b12", bgColor2: "#241a46", bgAngle: 160,
-    bgBlur: 0, bgZoom: 115, bgMotion: true, bgDim: 0.25, vignette: true,
-    screenFlash: 0, screenPulse: 0.06,
-    titleText: "JUDUL LAGU", titleFont: "Inter, system-ui, sans-serif", titleSize: 64,
-    titleColor: "#ffffff", titleX: 0, titleY: -0.62, titleSpacing: 2, titleShadow: true,
-    subText: "Artist Name", subSize: 26, subColor: "#cfd4e6", subX: 0, subY: -0.42,
-    lyricsOn: false, lyricsText: "", lyricSize: 44, lyricY: 0.35,
-    lyricColor: "#ffffff", lyricDim: "#ffffff", lyricStamped: true,
-    elGhostBars: true, elParticles: true, elRing: false, elTopSpec: false,
-    elCenterLine: false, elGrid: false, elNoise: false, elOpacity: 0.5,
-    lineStyle: "smooth", lineWidth: 3, beatSensitivity: 1.25,
-    resPreset: "1920x1080", fps: "30", bitrate: "8000000"
-  };
-  const state = Object.assign({}, DEFAULTS);
-  const bg = { element: null, isVideo: false, name: "" };
-
-  /* ==================== tiny helpers ==================== */
-  const clamp = (v, a, b) => (v < a ? a : v > b ? b : v);
-  const lerp = (a, b, t) => a + (b - a) * t;
-  function hexToRgb(hex) {
-    const h = hex.replace("#", "");
-    const s = h.length === 3 ? h.split("").map((c) => c + c).join("") : h;
-    const n = parseInt(s, 16);
-    return [(n >> 16) & 255, (n >> 8) & 255, n & 255];
-  }
-  function rgbStr(c, a) {
-    return a === undefined ? "rgb(" + c[0] + "," + c[1] + "," + c[2] + ")"
-      : "rgba(" + c[0] + "," + c[1] + "," + c[2] + "," + a + ")";
-  }
-  function mixColor(a, b, t) {
-    return [Math.round(lerp(a[0], b[0], t)), Math.round(lerp(a[1], b[1], t)), Math.round(lerp(a[2], b[2], t))];
-  }
-  function hsl(h, s, l) { return "hsl(" + h + "," + s + "%," + l + "%)"; }
-  function fmtTime(t) {
-    if (!isFinite(t) || t < 0) t = 0;
-    const m = Math.floor(t / 60);
-    const s = Math.floor(t % 60);
-    const d = Math.floor((t % 1) * 10);
-    return m + ":" + String(s).padStart(2, "0") + "." + d;
-  }
-
-  /* ==================== element refs ==================== */
-  const canvas = $("stage");
-  const ctx = canvas.getContext("2d");
-  const wrap = $("canvasWrap");
-  const stageStatus = $("stageStatus");
-  const canvasInfo = $("canvasInfo");
-  const timeLabel = $("timeLabel");
-  const seek = $("seek");
-  const fileName = $("fileName");
-  const recStatus = $("recStatus");
-  const lastExport = $("lastExport");
-
-  /* ==================== audio graph ==================== */
-  let audioCtx = null;
-  let analyser = null;
-  let gainNode = null;
-  let sourceNode = null;
-  let audioBuffer = null;
-  let audioEl = null;          // for MediaElementSource playback of URL/local files
-  let useElement = false;
-  const freq = new Uint8Array(1024);
-  const wave = new Uint8Array(2048);
-  const bars = new Float32Array(256);
-  let energySmooth = 0, bass = 0;
-  let beatFlash = 0;
-  let prevBass = 0;
-
-  function initAudioCtx() {
-    if (audioCtx) return audioCtx;
-    const AC = window.AudioContext || window.webkitAudioContext;
-    audioCtx = new AC();
-    analyser = audioCtx.createAnalyser();
-    analyser.fftSize = 2048;
-    analyser.smoothingTimeConstant = 0.75;
-    gainNode = audioCtx.createGain();
-    gainNode.connect(analyser);
-    analyser.connect(audioCtx.destination);
-    return audioCtx;
-  }
-
-  function decodeArrayBuffer(ab) {
-    initAudioCtx();
-    return new Promise((resolve, reject) => {
-      audioCtx.decodeAudioData(ab, resolve, reject);
-    });
-  }
-
-  async function loadFile(file) {
-    try {
-      stageStatus.textContent = "Memuat " + file.name + "…";
-      const ab = await file.arrayBuffer();
-      try {
-        audioBuffer = await decodeArrayBuffer(ab);
-        audioEl = null; useElement = false;
-        stageStatus.textContent = "Audio siap";
-      } catch (err) {
-        // format yang tidak didukung Web Audio (mis. beberapa file M4A) → fallback ke <audio>
-        audioBuffer = null;
-        setupElementSource(URL.createObjectURL(file), file.name);
-        stageStatus.textContent = "Audio siap (mode elemen)";
-      }
-      fileName.textContent = file.name;
-      $("audioInfo").textContent =
-        (audioBuffer ? "Durasi " + fmtTime(audioBuffer.duration) + " · " + audioBuffer.sampleRate + " Hz · " +
-          audioBuffer.numberOfChannels + " channel" : "Diputar lewat elemen audio (analisis tetap jalan).");
-      applyVolume();
-      updateDuration();
-      document.title = file.name + " — Free Visualizer Studio";
-    } catch (e) {
-      stageStatus.textContent = "Gagal memuat audio";
-      $("audioInfo").textContent = "Gagal memuat audio: " + e.message;
-    }
-  }
-
-  function setupElementSource(url, name) {
-    initAudioCtx();
-    if (!audioEl) {
-      audioEl = document.createElement("audio");
-      audioEl.crossOrigin = "anonymous";
-      audioEl.preload = "auto";
-      audioEl.addEventListener("loadedmetadata", updateDuration);
-      audioEl.addEventListener("ended", () => setPlaying(false));
-    }
-    audioEl.src = url;
-    fileName.textContent = name;
-    try {
-      if (!useElement) {
-        sourceNode = audioCtx.createMediaElementSource(audioEl);
-        sourceNode.connect(gainNode);
-        useElement = true;
-      }
-    } catch (e) { /* sudah terhubung */ }
-  }
-
-  function applyVolume() {
-    if (!gainNode || !audioCtx) return;
-    const now = audioCtx.currentTime;
-    gainNode.gain.cancelScheduledValues(now);
-    let v = state.volume;
-    if (state.fadeIn > 0 || state.fadeOut > 0) {
-      const dur = getDuration();
-      const t = getCurrentTime();
-      if (state.fadeIn > 0 && t < state.fadeIn) v *= t / state.fadeIn;
-      if (state.fadeOut > 0 && dur > 0 && t > dur - state.fadeOut) {
-        v *= Math.max(0, (dur - t) / state.fadeOut);
-      }
-    }
-    gainNode.gain.setTargetAtTime(v, now, 0.02);
-  }
-
-  function getDuration() {
-    if (audioBuffer) return audioBuffer.duration;
-    if (audioEl) return audioEl.duration || 0;
-    return 0;
-  }
-  function getCurrentTime() {
-    if (playing) return currentTime();
-    if (audioBuffer) return playTime;
-    if (audioEl) return audioEl.currentTime || 0;
-    return 0;
-  }
-
-  /* ==================== playback ==================== */
-  let playing = false;
-  let playTime = 0;
-  let startedAt = 0;
-  let wallStartedAt = 0;
-  let rafId = 0;
-
-  function startPlayback(offset) {
-    if (!audioBuffer && !audioEl) return;
-    initAudioCtx();
-    if (audioCtx.state === "suspended") audioCtx.resume();
-    const off = clamp(offset === undefined ? playTime : offset, 0, Math.max(0, getDuration() - 0.01));
-    stopSource();
-    if (audioBuffer) {
-      sourceNode = audioCtx.createBufferSource();
-      sourceNode.buffer = audioBuffer;
-      sourceNode.connect(gainNode);
-      sourceNode.onended = () => {
-        if (playing && getCurrentTime() >= getDuration() - 0.05) setPlaying(false);
-      };
-      sourceNode.start(0, off);
-      startedAt = audioCtx.currentTime - off;
-      wallStartedAt = performance.now() / 1000 - off;
-      playTime = off;
-      useElement = false;
-    } else {
-      audioEl.currentTime = off;
-      const p = audioEl.play();
-      if (p && p.catch) p.catch(() => {});
-    }
-    setPlaying(true);
-    applyVolume();
-  }
-
-  function stopSource() {
-    if (sourceNode && !useElement) {
-      try { sourceNode.onended = null; sourceNode.stop(); } catch (e) {}
-    }
-    sourceNode = null;
-  }
-
-  function setPlaying(v) {
-    playing = v;
-    $("btnPlay").textContent = v ? "❚❚ Pause" : "▶ Play";
-    $("stageStatus").textContent = v ? "Memutar" : "Siap";
-  }
-
-  function pausePlayback() {
-    if (audioBuffer) playTime = getCurrentTime();
-    else if (audioEl) audioEl.pause();
-    stopSource();
-    setPlaying(false);
-  }
-
-  function stopPlayback() {
-    stopSource();
-    if (audioEl) { audioEl.pause(); audioEl.currentTime = 0; }
-    playTime = 0;
-    setPlaying(false);
-    applyVolume();
-    render();
-  }
-
-  function seekTo(t) {
-    t = clamp(t, 0, Math.max(0, getDuration()));
-    if (playing) startPlayback(t);
-    else { playTime = t; if (audioEl) audioEl.currentTime = t; render(); }
-  }
-
-  function updateDuration() {
-    const d = getDuration();
-    timeLabel.textContent = fmtTime(getCurrentTime()) + " / " + fmtTime(d);
-  }
-
-  /* ==================== analysis ==================== */
-  function analyse() {
-    if (!analyser) {
-      freq.fill(0); wave.fill(128);
-      return;
-    }
-    analyser.smoothingTimeConstant = clamp(state.smoothing, 0, 0.95);
-    analyser.getByteFrequencyData(freq);
-    analyser.getByteTimeDomainData(wave);
-
-    const n = state.barCount | 0;
-    const usable = Math.max(24, Math.min(900, Math.floor(freq.length * 0.72)));
-    let sum = 0, low = 0, lowN = 0;
-    for (let i = 0; i < n; i++) {
-      const t0 = i / n, t1 = (i + 1) / n;
-      const a = Math.floor(Math.pow(t0, 1.7) * usable);
-      const b = Math.max(a + 1, Math.floor(Math.pow(t1, 1.7) * usable));
-      let peak = 0, acc = 0, c = 0;
-      for (let k = a; k < b && k < freq.length; k++) {
-        const v = freq[k];
-        if (v > peak) peak = v;
-        acc += v; c++;
-      }
-      let v = (peak * 0.6 + (c ? acc / c : 0) * 0.4) / 255;
-      const lowWeight = state.bassBoost * Math.max(0, 1 - i / (n * 0.45));
-      v = clamp(v * state.gain * (1 + lowWeight), 0, 1.7);
-      const prev = bars[i] || 0;
-      bars[i] = v > prev ? v : prev * 0.82 + v * 0.18;
-      sum += bars[i];
-      if (i < Math.max(2, n * 0.12)) { low += bars[i]; lowN++; }
-    }
-    energySmooth = energySmooth * 0.85 + (sum / n) * 0.15;
-    bass = lowN ? low / lowN : 0;
-
-    const rise = bass - prevBass;
-    prevBass = bass;
-    const th = 0.06 / clamp(state.beatSensitivity, 0.6, 2.4);
-    if (rise > th && bass > 0.28) beatFlash = 1;
-    beatFlash *= 0.9;
-  }
-
-  /* ==================== colour helpers ==================== */
-  function barColor(i, n, alpha) {
-    const c1 = hexToRgb(state.color1), c2 = hexToRgb(state.color2);
-    const t = n > 1 ? i / (n - 1) : 0;
-    switch (state.colorMode) {
-      case "solid": return rgbStr(c1, alpha);
-      case "rainbow": return hsl(Math.round(t * 320), 85, 60 - 6 * (1 - t));
-      case "fire": return hsl(Math.round(50 - t * 50), 100, Math.round(38 + 22 * (1 - t)));
-      case "ice": return hsl(Math.round(190 + t * 40), 90, 45 + 25 * t);
-      case "neon": return hsl(Math.round(280 + t * 120), 100, 62);
-      default: {
-        const m = mixColor(c1, c2, t);
-        return rgbStr(m, alpha);
-      }
-    }
-  }
-
-  /* ==================== render layers ==================== */
-  const particles = Array.from({ length: 90 }, () => ({
-    x: Math.random(), y: Math.random(), r: Math.random() * 2.2 + 0.5, s: Math.random() * 0.4 + 0.08
-  }));
-
-  function roundRect(x, y, w, h, r) {
-    const rr = Math.min(r, Math.abs(w) / 2, Math.abs(h) / 2);
-    ctx.beginPath();
-    ctx.moveTo(x + rr, y);
-    ctx.arcTo(x + w, y, x + w, y + h, rr);
-    ctx.arcTo(x + w, y + h, x, y + h, rr);
-    ctx.arcTo(x, y + h, x, y, rr);
-    ctx.arcTo(x, y, x + w, y, rr);
-    ctx.closePath();
-  }
-
-  function drawBackdrop(W, H, t) {
-    ctx.save();
-    if (bg.element && (bg.isVideo || bg.element.tagName === "IMG")) {
-      const el = bg.element;
-      const iw = el.videoWidth || el.naturalWidth || W;
-      const ih = el.videoHeight || el.naturalHeight || H;
-      const zoom = state.bgZoom / 100;
-      const scale = Math.max(W / iw, H / ih) * zoom;
-      const dw = iw * scale, dh = ih * scale;
-      let ox = (W - dw) / 2, oy = (H - dh) / 2;
-      if (state.bgMotion && !recording) {
-        ox += Math.sin(t * 0.08) * Math.min(60, dw * 0.03);
-        oy += Math.cos(t * 0.06) * Math.min(60, dh * 0.03);
-      }
-      ctx.filter = state.bgBlur > 0 ? "blur(" + state.bgBlur + "px)" : "none";
-      ctx.drawImage(el, ox, oy, dw, dh);
-      ctx.filter = "none";
-    } else {
-      let paint;
-      if (state.bgType === "solid") paint = state.bgColor1;
-      else if (state.bgType === "radial") {
-        const g = ctx.createRadialGradient(W / 2, H / 2, 0, W / 2, H / 2, Math.max(W, H) * 0.72);
-        g.addColorStop(0, state.bgColor2);
-        g.addColorStop(1, state.bgColor1);
-        paint = g;
-      } else {
-        const a = (state.bgAngle * Math.PI) / 180;
-        const cx = W / 2, cy = H / 2, len = Math.max(W, H) * 0.75;
-        const g = ctx.createLinearGradient(cx - Math.cos(a) * len, cy - Math.sin(a) * len,
-          cx + Math.cos(a) * len, cy + Math.sin(a) * len);
-        g.addColorStop(0, state.bgColor1);
-        g.addColorStop(1, state.bgColor2);
-        paint = g;
-      }
-      ctx.fillStyle = paint;
-      ctx.fillRect(0, 0, W, H);
-    }
-    if (state.bgDim > 0) {
-      ctx.fillStyle = "rgba(0,0,0," + state.bgDim + ")";
-      ctx.fillRect(0, 0, W, H);
-    }
-    if (state.elGrid) {
-      ctx.save();
-      ctx.globalAlpha = 0.06 * (0.4 + state.elOpacity);
-      ctx.strokeStyle = "#fff";
-      ctx.lineWidth = 1;
-      const step = Math.max(40, W / 32);
-      for (let x = 0; x < W; x += step) { ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, H); ctx.stroke(); }
-      for (let y = 0; y < H; y += step) { ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke(); }
-      ctx.restore();
-    }
-    ctx.restore();
-  }
-
-  function drawGhostBars(W, H, t) {
-    const n = 48;
-    ctx.save();
-    ctx.globalAlpha = 0.1 * (0.5 + state.elOpacity) * (0.6 + energySmooth);
-    const bw = W / n;
-    for (let i = 0; i < n; i++) {
-      const v = bars[(i * state.barCount / n) | 0] || 0;
-      const h = H * 0.42 * v;
-      ctx.fillStyle = barColor(i, n, 0.5);
-      ctx.fillRect(i * bw + bw * 0.25, H - h, bw * 0.5, h);
-      ctx.fillRect(i * bw + bw * 0.25, 0, bw * 0.5, h * 0.5);
-    }
-    ctx.restore();
-  }
-
-  function drawParticles(W, H, t) {
-    ctx.save();
-    ctx.globalAlpha = 0.22 * (0.5 + state.elOpacity);
-    for (const p of particles) {
-      p.y -= p.s * (0.0012 + energySmooth * 0.004);
-      if (p.y < -0.05) { p.y = 1.05; p.x = Math.random(); }
-      ctx.fillStyle = barColor(p.x, 1, 0.9);
-      ctx.beginPath();
-      ctx.arc(p.x * W, p.y * H, p.r * (1 + energySmooth * 2), 0, Math.PI * 2);
-      ctx.fill();
-    }
-    ctx.restore();
-  }
-
-  function drawVisualizer(W, H, t) {
-    const n = state.barCount | 0;
-    const cx = W / 2, cy = H / 2;
-    const glow = state.glow;
-    ctx.save();
-    ctx.lineJoin = "round";
-    ctx.lineCap = "round";
-    if (glow > 0) {
-      ctx.shadowBlur = glow;
-      ctx.shadowColor = state.color2;
-    }
-    const type = state.visType;
-    const rot = state.rotation * (t * 0.2);
-
-    if (type === "bars" || type === "barsMirror" || type === "mirrorSym" || type === "led") {
-      const mirror = type !== "bars" || state.mirrorOn;
-      const count = mirror ? Math.ceil(n / 2) : n;
-      const gap = W * 0.006;
-      const bw = (W * 0.9 - gap * (count - 1)) / count;
-      const base = H * 0.9;
-      for (let i = 0; i < count; i++) {
-        const v = bars[i] || 0;
-        const h = Math.max(2, base * 0.5 * v);
-        ctx.fillStyle = barColor(i, count, 0.95);
-        const x = W * 0.05 + i * (bw + gap);
-        if (type === "led") {
-          const seg = 26, sh = h / seg;
-          for (let s = 0; s < seg; s++) {
-            if (v * seg < s + 0.4) break;
-            ctx.globalAlpha = 0.35 + 0.65 * (s / seg);
-            roundRect(x, base - sh * (s + 0.85), bw, sh * 0.72, 2);
-            ctx.fill();
-          }
-          ctx.globalAlpha = 1;
-        } else {
-          roundRect(x, base - h, bw, h, bw * 0.25);
-          ctx.fill();
-        }
-      }
-      if (mirror) {
-        for (let i = 0; i < count; i++) {
-          const v = bars[i] || 0;
-          const h = Math.max(2, base * 0.5 * v);
-          ctx.fillStyle = barColor(i, count, 0.5);
-          const x = W * 0.95 - bw - i * (bw + gap);
-          roundRect(x, base - h * 0.82, bw, h * 0.82, bw * 0.25);
-          ctx.fill();
-        }
-      }
-    } else if (type === "blocks") {
-      const cols = Math.round(Math.sqrt(n * (W / H)));
-      const rows = Math.max(3, Math.round(n / cols));
-      const cw = (W * 0.86) / cols, ch = (H * 0.62) / rows;
-      for (let r = 0; r < rows; r++) {
-        for (let c = 0; c < cols; c++) {
-          const v = bars[(r * cols + c) % n] || 0;
-          const lit = v > 1 - (r + 1) / rows;
-          ctx.globalAlpha = lit ? 0.95 : 0.1 + v * 0.25;
-          ctx.fillStyle = barColor(c, cols, 1);
-          roundRect(W * 0.07 + c * cw, H * 0.19 + r * ch, cw * 0.82, ch * 0.78, 3);
-          ctx.fill();
-        }
-      }
-      ctx.globalAlpha = 1;
-    } else if (type === "dots") {
-      const cols = Math.round(Math.sqrt(n * (W / H)));
-      const rows = Math.max(3, Math.round(n / cols));
-      const cw = (W * 0.86) / cols, ch = (H * 0.66) / rows;
-      for (let r = 0; r < rows; r++) {
-        for (let c = 0; c < cols; c++) {
-          const v = bars[(r * cols + c) % n] || 0;
-          const rad = 2 + v * Math.min(cw, ch) * 0.45;
-          ctx.globalAlpha = 0.25 + v * 0.75;
-          ctx.fillStyle = barColor(c * 2, cols * 2, 1);
-          ctx.beginPath();
-          ctx.arc(W * 0.07 + c * cw + cw / 2, H * 0.17 + r * ch + ch / 2, rad, 0, Math.PI * 2);
-          ctx.fill();
-        }
-      }
-      ctx.globalAlpha = 1;
-    } else if (type === "circular") {
-      const R = Math.min(W, H) * 0.26;
-      const inner = R * (1 + 0.14 * bass);
-      for (let i = 0; i < n; i++) {
-        const a = (i / n) * Math.PI * 2 + rot;
-        const v = bars[i] || 0;
-        const len = R * (0.25 + v * 1.05);
-        const x1 = cx + Math.cos(a) * inner, y1 = cy + Math.sin(a) * inner;
-        const x2 = cx + Math.cos(a) * (inner + len), y2 = cy + Math.sin(a) * (inner + len);
-        ctx.strokeStyle = barColor(i, n, 0.95);
-        ctx.lineWidth = Math.max(3, (Math.PI * 2 * inner) / n * 0.42);
-        ctx.beginPath();
-        ctx.moveTo(x1, y1);
-        ctx.lineTo(x2, y2);
-        ctx.stroke();
-      }
-      ctx.beginPath();
-      ctx.arc(cx, cy, inner * 0.94, 0, Math.PI * 2);
-      ctx.strokeStyle = barColor(0, n, 0.35);
-      ctx.lineWidth = 2;
-      ctx.stroke();
-    } else if (type === "radial") {
-      const R = Math.min(W, H) * 0.3 * (1 + bass * 0.14);
-      ctx.beginPath();
-      for (let i = 0; i <= n; i++) {
-        const idx = i % n;
-        const a = (i / n) * Math.PI * 2 + rot;
-        const v = bars[idx] || 0;
-        const r = R + v * R * 0.6;
-        const x = cx + Math.cos(a) * r, y = cy + Math.sin(a) * r;
-        i ? ctx.lineTo(x, y) : ctx.moveTo(x, y);
-      }
-      ctx.closePath();
-      ctx.fillStyle = barColor(1, 3, 0.18);
-      ctx.fill();
-      ctx.strokeStyle = state.color2;
-      ctx.lineWidth = state.lineWidth;
-      ctx.stroke();
-    } else if (type === "rings") {
-      for (let k = 0; k < 5; k++) {
-        const p = (t * 0.35 + k * 0.2) % 1;
-        const r = Math.min(W, H) * (0.12 + p * 0.42) * (1 + bass * 0.25);
-        ctx.beginPath();
-        ctx.arc(cx, cy, r, 0, Math.PI * 2);
-        ctx.strokeStyle = barColor(k, 5, (1 - p) * (0.35 + bass));
-        ctx.lineWidth = state.lineWidth + 3;
-        ctx.stroke();
-      }
-      ctx.beginPath();
-      ctx.arc(cx, cy, Math.min(W, H) * 0.1 * (1 + bass * 0.4), 0, Math.PI * 2);
-      ctx.fillStyle = barColor(0, 2, 0.85);
-      ctx.fill();
-    } else if (type === "spectrum") {
-      const base = H * 0.86;
-      ctx.beginPath();
-      ctx.moveTo(0, base);
-      for (let i = 0; i < n; i++) {
-        const v = bars[i] || 0;
-        const x = (i / (n - 1)) * W;
-        const y = base - H * 0.55 * v;
-        ctx.lineTo(x, y);
-      }
-      ctx.lineTo(W, base);
-      ctx.closePath();
-      const g = ctx.createLinearGradient(0, base - H * 0.55, 0, base);
-      g.addColorStop(0, rgbStr(hexToRgb(state.color2), 0.9));
-      g.addColorStop(1, rgbStr(hexToRgb(state.color2), 0.05));
-      ctx.fillStyle = g;
-      ctx.fill();
-      ctx.strokeStyle = state.color1;
-      ctx.lineWidth = state.lineWidth;
-      ctx.stroke();
-    } else {
-      // wave / waveFill
-      const amp = H * 0.2;
-      ctx.beginPath();
-      const N = wave.length;
-      const step = Math.max(1, Math.floor(N / 900));
-      for (let i = 0, px = 0; i < N; i += step, px++) {
-        const x = (i / (N - 1)) * W;
-        const y = cy + ((wave[i] - 128) / 128) * amp * (1 + bass);
-        if (type === "wave" || state.lineStyle === "sharp") {
-          i ? ctx.lineTo(x, y) : ctx.moveTo(x, y);
-        } else {
-          if (!i) ctx.moveTo(x, y);
-          else {
-            const prevX = ((i - step) / (N - 1)) * W;
-            const mp = (prevX + x) / 2;
-            ctx.quadraticCurveTo(prevX, ctx.__py, mp, y);
-          }
-          ctx.__py = y;
-        }
-      }
-      if (type === "waveFill") {
-        ctx.lineTo(W, cy);
-        ctx.lineTo(0, cy);
-        ctx.closePath();
-        ctx.fillStyle = rgbStr(hexToRgb(state.color1), 0.22);
-        ctx.fill();
-      }
-      const stroke = ctx.createLinearGradient(0, 0, W, 0);
-      stroke.addColorStop(0, state.color1);
-      stroke.addColorStop(1, state.color2);
-      ctx.strokeStyle = state.colorMode === "solid" ? state.color1 : stroke;
-      ctx.lineWidth = state.lineWidth * (1 + bass * 0.6);
-      ctx.stroke();
-    }
-    ctx.restore();
-  }
-
-  function drawText(W, H) {
-    ctx.save();
-    ctx.textAlign = "center";
-    ctx.textBaseline = "middle";
-    if (state.titleShadow) {
-      ctx.shadowColor = "rgba(0,0,0,0.65)";
-      ctx.shadowBlur = 22;
-      ctx.shadowOffsetY = 4;
-    }
-    if (state.titleText) {
-      ctx.font = "800 " + state.titleSize + "px " + state.titleFont;
-      if (ctx.letterSpacing !== undefined) ctx.letterSpacing = state.titleSpacing + "px";
-      ctx.fillStyle = state.titleColor;
-      ctx.globalAlpha = 0.92 + beatFlash * 0.08;
-      ctx.fillText(state.titleText, W / 2 + state.titleX * W * 0.5, H / 2 + state.titleY * H * 0.5);
-      ctx.globalAlpha = 1;
-    }
-    if (state.subText) {
-      ctx.font = "500 " + state.subSize + "px " + state.titleFont;
-      if (ctx.letterSpacing !== undefined) ctx.letterSpacing = "1px";
-      ctx.shadowBlur = state.titleShadow ? 14 : 0;
-      ctx.fillStyle = state.subColor;
-      ctx.globalAlpha = 0.9;
-      ctx.fillText(state.subText, W / 2 + state.subX * W * 0.5, H / 2 + state.subY * H * 0.5);
-      ctx.globalAlpha = 1;
-    }
-    if (ctx.letterSpacing !== undefined) ctx.letterSpacing = "0px";
-    ctx.restore();
-  }
-
-  /* ---- lyrics ---- */
-  let lyricLines = [];
-  function parseLyrics(text) {
-    const out = [];
-    (text || "").split(/\r?\n/).forEach((raw) => {
-      const line = raw.trim();
-      if (!line) return;
-      const parts = line.split("|");
-      const stamp = parseStamp(parts[0]);
-      if (stamp === null) return;
-      out.push({ time: stamp, text: (parts[1] || "").trim(), trans: (parts[2] || "").trim() });
-    });
-    out.sort((a, b) => a.time - b.time);
-    lyricLines = out;
-    $("lyricStatus").textContent = out.length + " baris lirik.";
-  }
-  function parseStamp(s) {
-    s = String(s || "").trim();
-    if (!s) return null;
-    if (/^\d+(\.\d+)?$/.test(s)) return parseFloat(s);
-    const m = s.match(/^(?:(\d+):)?(\d+(?:\.\d+)?)$/);
-    if (!m) return null;
-    return (m[1] ? parseInt(m[1], 10) * 60 : 0) + parseFloat(m[2]);
-  }
-
-  function drawLyrics(W, H, t) {
-    if (!state.lyricsOn || !lyricLines.length) return;
-    let idx = -1;
-    for (let i = 0; i < lyricLines.length; i++) {
-      if (t >= lyricLines[i].time - 0.001) idx = i; else break;
-    }
-    if (idx < 0) idx = 0;
-    const active = lyricLines[idx];
-    const nextT = idx + 1 < lyricLines.length ? lyricLines[idx + 1].time : (getDuration() || active.time + 4);
-    const span = Math.max(0.2, nextT - active.time);
-    const prog = clamp((t - active.time) / span, 0, 1);
-    const appear = clamp((t - active.time) / 0.25, 0, 1);
-
-    ctx.save();
-    ctx.textAlign = "center";
-    ctx.textBaseline = "middle";
-    const baseY = H / 2 + state.lyricY * H * 0.5;
-    const fade = (1 - prog) * (1 - prog);
-
-    ctx.font = "700 " + state.lyricSize + "px Inter, system-ui, sans-serif";
-    if (idx > 0) {
-      ctx.globalAlpha = 0.16 * state.elOpacity + 0.06;
-      ctx.fillStyle = state.lyricDim;
-      ctx.fillText(lyricLines[idx - 1].text, W / 2, baseY - state.lyricSize * 1.5);
-    }
-    if (idx + 1 < lyricLines.length) {
-      ctx.globalAlpha = 0.18;
-      ctx.fillStyle = state.lyricDim;
-      ctx.fillText(lyricLines[idx + 1].text, W / 2, baseY + state.lyricSize * 1.5);
-    }
-
-    ctx.globalAlpha = appear;
-    ctx.translate(0, (1 - appear) * 22);
-    ctx.shadowColor = "rgba(0,0,0,0.6)";
-    ctx.shadowBlur = 24;
-    ctx.globalAlpha = appear * (0.22 * fade + 0.1);
-    ctx.fillStyle = state.lyricDim;
-    ctx.fillText(active.text, W / 2, baseY);
-    ctx.globalAlpha = appear;
-    ctx.fillStyle = state.lyricColor;
-    const metrics = ctx.measureText(active.text);
-    const revealed = Math.max(14, metrics.width * prog * 1.18);
-    ctx.save();
-    ctx.beginPath();
-    ctx.rect(W / 2 - metrics.width / 2 - 12, baseY - state.lyricSize, revealed + 24, state.lyricSize * 2);
-    ctx.clip();
-    ctx.fillText(active.text, W / 2, baseY);
-    ctx.restore();
-
-    if (active.trans) {
-      ctx.font = "500 " + Math.max(14, state.lyricSize * 0.56) + "px Inter, system-ui, sans-serif";
-      ctx.globalAlpha = appear * 0.75;
-      ctx.fillStyle = state.lyricDim;
-      ctx.fillText(active.trans, W / 2, baseY + state.lyricSize * 0.95);
-    }
-    ctx.restore();
-  }
-
-  function drawVignette(W, H) {
-    if (!state.vignette) return;
-    const g = ctx.createRadialGradient(W / 2, H / 2, Math.min(W, H) * 0.3, W / 2, H / 2, Math.max(W, H) * 0.75);
-    g.addColorStop(0, "rgba(0,0,0,0)");
-    g.addColorStop(1, "rgba(0,0,0,0.55)");
-    ctx.fillStyle = g;
-    ctx.fillRect(0, 0, W, H);
-  }
-
-  function drawNoise(W, H) {
-    if (!state.elNoise) return;
-    ctx.save();
-    ctx.globalAlpha = 0.035 + state.elOpacity * 0.03;
-    for (let i = 0; i < 220; i++) {
-      ctx.fillStyle = Math.random() > 0.5 ? "#fff" : "#000";
-      ctx.fillRect(Math.random() * W, Math.random() * H, 1.6, 1.6);
-    }
-    ctx.restore();
-  }
-
-  /* ==================== main render ==================== */
-  function resizeCanvasToPreset() {
-    const dims = state.resPreset.split("x").map(Number);
-    canvas.width = dims[0];
-    canvas.height = dims[1];
-    canvasInfo.textContent = dims[0] + "\u00d7" + dims[1] + " \u00b7 " + state.fps + " fps";
-  }
-
-  function currentTime() {
-    if (!playing) return playTime;
-    if (audioBuffer) {
-      const ac = audioCtx.currentTime - startedAt;
-      const wall = performance.now() / 1000 - wallStartedAt;
-      // AudioContext bisa tertahan (autoplay policy); pakai jam dinding agar preview & export tetap maju.
-      const t = ac < 0.05 && wall > ac ? wall : ac;
-      return clamp(t, 0, getDuration());
-    }
-    if (audioEl) return audioEl.currentTime || 0;
-    return playTime;
-  }
-
-  function render() {
-    const W = canvas.width, H = canvas.height;
-    const t = currentTime();
-    analyse();
-
-    ctx.setTransform(1, 0, 0, 1, 0, 0);
-    ctx.globalAlpha = 1;
-    ctx.shadowBlur = 0;
-
-    const pulse = 1 + state.screenPulse * bass + (state.beatScale ? beatFlash * 0.03 : 0);
-    ctx.save();
-    ctx.translate(W / 2, H / 2);
-    ctx.scale(pulse, pulse);
-    ctx.translate(-W / 2, -H / 2);
-
-    drawBackdrop(W, H, t);
-    if (state.elGhostBars) drawGhostBars(W, H);
-    if (state.elParticles) drawParticles(W, H);
-    if (state.elCenterLine) {
-      ctx.save();
-      ctx.globalAlpha = 0.18;
-      ctx.strokeStyle = state.color2;
-      ctx.lineWidth = 1.5;
-      ctx.beginPath();
-      ctx.moveTo(0, H / 2);
-      ctx.lineTo(W, H / 2);
-      ctx.stroke();
-      ctx.restore();
-    }
-    if (state.elRing) {
-      ctx.save();
-      ctx.strokeStyle = barColor(1, 3, 0.5);
-      ctx.lineWidth = 3 + bass * 14;
-      ctx.beginPath();
-      ctx.arc(W / 2, H / 2, Math.min(W, H) * (0.22 + bass * 0.22), 0, Math.PI * 2);
-      ctx.stroke();
-      ctx.restore();
-    }
-    drawVisualizer(W, H, t);
-    if (state.elTopSpec) {
-      ctx.save();
-      ctx.globalAlpha = 0.5;
-      const n = 120;
-      for (let i = 0; i < n; i++) {
-        const v = bars[i % (state.barCount | 0)] || 0;
-        ctx.fillStyle = barColor(i, n, 0.7);
-        ctx.fillRect((i / n) * W, 0, W / n - 1, H * 0.1 * v);
-      }
-      ctx.restore();
-    }
-    if (state.lyricsOn) drawLyrics(W, H, t);
-    drawText(W, H);
-    drawVignette(W, H);
-    drawNoise(W, H);
-
-    if (state.screenFlash > 0 && beatFlash > 0.02) {
-      ctx.fillStyle = rgbStr(hexToRgb(state.color2), state.screenFlash * beatFlash);
-      ctx.fillRect(0, 0, W, H);
-    }
-    ctx.restore();
-
-    if (recording) {
-      const d = getDuration() || 0;
-      const prog = d ? clamp(t / d, 0, 1) : 0;
-      $("recBar").querySelector("i").style.width = (prog * 100).toFixed(1) + "%";
-      recStatus.textContent = "Merekam " + fmtTime(t) + " / " + fmtTime(d) +
-        (d ? " (" + Math.round(prog * 100) + "%)" : "");
-      if (d && t >= d - 0.05) stopRecording();
-    }
-    updateDuration();
-    const dur = getDuration();
-    if (dur && !draggingSeek) seek.value = Math.round((t / dur) * 1000);
-  }
-
-  function loop() {
-    render();
-    if (playing && state.fadeIn + state.fadeOut > 0) applyVolume();
-    rafId = requestAnimationFrame(loop);
-  }
-
-  /* ==================== recorder ==================== */
-  let recording = false;
-  let recorder = null;
-  let chunks = [];
-  let lastBlob = null;
-  let lastUrl = null;
-  let draggingSeek = false;
-
-  function pickMime() {
-    const candidates = [
-      "video/webm;codecs=vp9,opus", "video/webm;codecs=vp8,opus", "video/webm",
-      "video/mp4;codecs=avc1,mp4a", "video/mp4"
-    ];
-    for (let i = 0; i < candidates.length; i++) {
-      if (window.MediaRecorder && MediaRecorder.isTypeSupported && MediaRecorder.isTypeSupported(candidates[i])) {
-        return candidates[i];
-      }
-    }
-    return "";
-  }
-
-  function startRecording() {
-    if (!audioBuffer && !audioEl) { recStatus.textContent = "Muat audio dulu sebelum export."; return; }
-    if (typeof MediaRecorder === "undefined" || !canvas.captureStream) {
-      recStatus.textContent = "Browser ini tidak mendukung perekaman. Coba Chrome/Edge terbaru.";
-      return;
-    }
-    resizeCanvasToPreset();
-    seekTo(0);
-    lastExport.textContent = "Export dijalankan...";
-
-    const stream = canvas.captureStream(Number(state.fps) || 30);
-    let audioAdded = false;
-    try {
-      initAudioCtx();
-      const dest = audioCtx.createMediaStreamDestination();
-      gainNode.connect(dest);
-      const track = dest.stream.getAudioTracks()[0];
-      if (track) { stream.addTrack(track); audioAdded = true; }
-    } catch (e) { /* rekam video saja bila audio graph gagal */ }
-
-    const mime = pickMime();
-    try {
-      recorder = mime
-        ? new MediaRecorder(stream, { mimeType: mime, videoBitsPerSecond: Number(state.bitrate) })
-        : new MediaRecorder(stream);
-    } catch (e) {
-      recStatus.textContent = "Gagal memulai recorder: " + e.message;
-      return;
-    }
-
-    chunks = [];
-    recorder.ondataavailable = (e) => { if (e.data && e.data.size) chunks.push(e.data); };
-    recorder.onstop = () => {
-      const type = recorder.mimeType || "video/webm";
-      lastBlob = new Blob(chunks, { type });
-      if (audioAdded) {
-        try { gainNode.disconnect(); } catch (e) {}
-        try { gainNode.connect(analyser); } catch (e) {}
-      }
-      if (lastUrl) URL.revokeObjectURL(lastUrl);
-      lastUrl = URL.createObjectURL(lastBlob);
-      const ext = type.indexOf("mp4") >= 0 ? "mp4" : "webm";
-      const base = (fileName.textContent || "visualizer").replace(/\.[^.]+$/, "");
-      const a = document.createElement("a");
-      a.href = lastUrl;
-      a.download = base + "-visualizer." + ext;
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-      lastExport.textContent = "Export selesai (" + (lastBlob.size / 1048576).toFixed(1) + " MB, " + ext.toUpperCase() + ").";
-      $("btnDownloadLast").disabled = false;
-      $("recBar").classList.remove("show");
-      $("btnStartRecord").disabled = false;
-      $("btnStopRecord").disabled = true;
-      $("btnCancelRecord").disabled = true;
-    };
-
-    recording = true;
-    recorder.start(1000);
-    startPlayback(0);
-    setPlaying(true);
-    $("recBar").classList.add("show");
-    $("btnStartRecord").disabled = true;
-    $("btnStopRecord").disabled = false;
-    $("btnCancelRecord").disabled = false;
-    recStatus.textContent = "Merekam...";
-  }
-
-  function stopRecording() {
-    if (!recording) return;
-    recording = false;
-    try { if (recorder && recorder.state !== "inactive") recorder.stop(); } catch (e) {}
-    pausePlayback();
-  }
-
-  /* ==================== UI bindings ==================== */
-  function bindUI() {
-    Object.keys(DEFAULTS).forEach((key) => {
-      const el = $(key);
-      if (!el) return;
-      const set = () => {
-        state[key] = el.type === "checkbox" ? el.checked
-          : (el.type === "range" || el.type === "number") ? parseFloat(el.value)
-          : el.value;
-      };
-      set();
-      el.addEventListener("input", () => { set(); onStateChange(key); });
-      el.addEventListener("change", () => { set(); onStateChange(key); });
-    });
-  }
-
-  function syncUI() {
-    Object.keys(DEFAULTS).forEach((key) => {
-      const el = $(key);
-      if (!el) return;
-      if (el.type === "checkbox") el.checked = !!state[key];
-      else el.value = state[key];
-    });
-    if ($("previewFit")) canvas.style.objectFit = $("previewFit").value;
-    drawSwatches();
-    parseLyrics(state.lyricsText);
-  }
-
-  function onStateChange(key) {
-    if (key === "lyricsText" || key === "lyricsOn") parseLyrics(state.lyricsText);
-    if (key === "volume" || key === "fadeIn" || key === "fadeOut") applyVolume();
-    if (key === "resPreset") { resizeCanvasToPreset(); render(); }
-    if (key === "fps") { canvasInfo.textContent = canvas.width + "\u00d7" + canvas.height + " \u00b7 " + state.fps + " fps"; }
-  }
-
-  const SWATCHES = [
-    ["#7c5cff", "#00d1b2"], ["#ff3d81", "#ffb03a"], ["#00d1ff", "#7c5cff"],
-    ["#ff5c72", "#ffe066"], ["#22e08a", "#0f9b6c"], ["#f7b267", "#f4845f"],
-    ["#b6ff3c", "#00d1b2"], ["#ffffff", "#a6adc8"], ["#0ea5e9", "#1e3a8a"],
-    ["#f97316", "#dc2626"], ["#a855f7", "#ec4899"], ["#14b8a6", "#eab308"]
-  ];
-  function drawSwatches() {
-    const wrapEl = $("swatches");
-    wrapEl.innerHTML = "";
-    SWATCHES.forEach((pair) => {
-      const i = document.createElement("i");
-      i.style.background = "linear-gradient(135deg," + pair[0] + "," + pair[1] + ")";
-      i.title = pair[0] + " \u2192 " + pair[1];
-      i.addEventListener("click", () => {
-        state.color1 = pair[0]; state.color2 = pair[1];
-        $("color1").value = pair[0]; $("color2").value = pair[1];
-      });
-      wrapEl.appendChild(i);
-    });
-  }
-
-  /* ==================== presets ==================== */
-  const PRESETS = [
-    { name: "Red Planet", cfg: { visType: "circular", colorMode: "fire", color1: "#ff3b3b", color2: "#ffb703", bgType: "radial", bgColor1: "#1a0505", bgColor2: "#3d0c05", glow: 26, barCount: 96, elGhostBars: false, rotation: 0.4, bgDim: 0.2 } },
-    { name: "Skyline", cfg: { visType: "bars", barCount: 72, colorMode: "gradient", color1: "#00d1ff", color2: "#7c5cff", bgType: "linear", bgColor1: "#050a1a", bgColor2: "#122a4d", bgAngle: 200, elGhostBars: true, glow: 22 } },
-    { name: "Mood Ring", cfg: { visType: "radial", colorMode: "rainbow", bgType: "radial", bgColor1: "#08080f", bgColor2: "#1b1030", glow: 30, barCount: 120, elParticles: true, rotation: 0.2 } },
-    { name: "Neon Grid", cfg: { visType: "led", colorMode: "neon", bgType: "linear", bgColor1: "#05030d", bgColor2: "#12002b", elGrid: true, glow: 34, barCount: 48, elCenterLine: true } },
-    { name: "Studio Clean", cfg: { visType: "wave", colorMode: "gradient", color1: "#ffffff", color2: "#8ea2ff", bgType: "solid", bgColor1: "#0b0c12", glow: 12, elGhostBars: false, elParticles: false, lineWidth: 2.5, barCount: 64 } },
-    { name: "TikTok Vertical", cfg: { resPreset: "1080x1920", visType: "mirrorSym", colorMode: "gradient", color1: "#ff3d81", color2: "#7c5cff", bgType: "linear", bgColor1: "#12021a", bgColor2: "#39064a", glow: 28, barCount: 56, titleSize: 74 } },
-    { name: "LED Wall", cfg: { visType: "blocks", colorMode: "gradient", color1: "#22e08a", color2: "#00d1ff", bgType: "solid", bgColor1: "#03070a", glow: 20, barCount: 96, elGrid: true, bgDim: 0.1 } },
-    { name: "Dreamy", cfg: { visType: "waveFill", colorMode: "gradient", color1: "#ff8ad1", color2: "#8ad1ff", bgType: "radial", bgColor1: "#0a0616", bgColor2: "#2b1550", glow: 40, elParticles: true, lineWidth: 4, screenPulse: 0.1 } },
-    { name: "Fire Circle", cfg: { visType: "rings", colorMode: "fire", bgType: "solid", bgColor1: "#0d0503", glow: 34, elParticles: true } },
-    { name: "Ice Bars", cfg: { visType: "barsMirror", colorMode: "ice", bgType: "linear", bgColor1: "#020a12", bgColor2: "#06324a", barCount: 88, glow: 24 } },
-    { name: "Dot Matrix", cfg: { visType: "dots", colorMode: "gradient", color1: "#b6ff3c", color2: "#00d1b2", bgType: "solid", bgColor1: "#04100c", barCount: 120, elGrid: true, glow: 16 } },
-    { name: "Spectrum Pro", cfg: { visType: "spectrum", colorMode: "gradient", color1: "#7c5cff", color2: "#00d1b2", bgType: "linear", bgColor1: "#06070f", bgColor2: "#141a33", elGhostBars: true, elTopSpec: true, glow: 18 } }
-  ];
-
-  function buildPresetGrid() {
-    const grid = $("presetGrid");
-    grid.innerHTML = "";
-    PRESETS.forEach((p) => {
-      const c = Object.assign({}, state, p.cfg);
-      const card = document.createElement("button");
-      card.className = "preset";
-      const pv = document.createElement("div");
-      pv.className = "pv";
-      pv.style.background = c.bgType === "solid" ? c.bgColor1
-        : "linear-gradient(" + (c.bgAngle || 160) + "deg," + c.bgColor1 + "," + c.bgColor2 + ")";
-      const barsHtml = document.createElement("div");
-      barsHtml.style.cssText = "height:100%;display:flex;align-items:flex-end;gap:2px;padding:6px";
-      for (let i = 0; i < 16; i++) {
-        const b = document.createElement("span");
-        b.style.cssText = "flex:1;height:" + (12 + Math.round(Math.abs(Math.sin(i * 1.7)) * 26)) +
-          "px;border-radius:2px;background:" +
-          (c.colorMode === "rainbow" ? "hsl(" + i * 20 + ",85%,60%)" : "linear-gradient(180deg," + c.color2 + "," + c.color1 + ")");
-        barsHtml.appendChild(b);
-      }
-      pv.appendChild(barsHtml);
-      const label = document.createElement("span");
-      label.textContent = p.name;
-      card.appendChild(pv);
-      card.appendChild(label);
-      card.addEventListener("click", () => {
-        Object.assign(state, p.cfg);
-        syncUI();
-        resizeCanvasToPreset();
-        render();
-        stageStatus.textContent = "Preset " + p.name + " diterapkan";
-      });
-      grid.appendChild(card);
-    });
-  }
-
-  /* ==================== lyric helpers ==================== */
-  function addLyricLine() {
-    const t = currentTime();
-    const text = prompt("Teks lirik untuk " + fmtTime(t) + ":", "");
-    if (!text) return;
-    const ta = $("lyricsText");
-    const line = (state.lyricStamped ? fmtTime(t) + "|" : "") + text;
-    ta.value = (ta.value.trim() ? ta.value.replace(/\s*$/, "") + "\n" : "") + line;
-    state.lyricsText = ta.value;
-    state.lyricsOn = true;
-    $("lyricsOn").checked = true;
-    parseLyrics(ta.value);
-  }
-
-  function autoDistribute() {
-    const raw = $("autoLyrics").value.split(/\r?\n/).map((s) => s.trim()).filter(Boolean);
-    if (!raw.length) return;
-    const dur = getDuration();
-    if (!dur) { stageStatus.textContent = "Muat audio dulu supaya durasi diketahui."; return; }
-    const start = 1, end = Math.max(start + 1, dur - 2);
-    const step = (end - start) / raw.length;
-    const lines = raw.map((txt, i) => {
-      const parts = txt.split("|");
-      const stamp = fmtTime(start + step * i);
-      return stamp + "|" + parts[0].trim() + (parts[1] ? "|" + parts[1].trim() : "");
-    }).join("\n");
-    $("lyricsText").value = lines;
-    state.lyricsText = lines;
-    state.lyricsOn = true;
-    $("lyricsOn").checked = true;
-    parseLyrics(lines);
-    stageStatus.textContent = raw.length + " baris lirik dibuat otomatis";
-  }
-
-  /* ==================== settings save/load ==================== */
-  function saveSettings() {
-    const data = { app: "free-visualizer-studio", version: 1, settings: state };
-    const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
-    const a = document.createElement("a");
-    a.href = URL.createObjectURL(blob);
-    a.download = "visualizer-settings.json";
-    a.click();
-    setTimeout(() => URL.revokeObjectURL(a.href), 2000);
-  }
-  function loadSettingsFile(file) {
-    const r = new FileReader();
-    r.onload = () => {
-      try {
-        const data = JSON.parse(r.result);
-        const s = data.settings || data;
-        Object.keys(DEFAULTS).forEach((k) => { if (k in s) state[k] = s[k]; });
-        syncUI();
-        resizeCanvasToPreset();
-        render();
-        stageStatus.textContent = "Pengaturan dimuat";
-      } catch (e) { stageStatus.textContent = "File pengaturan tidak valid"; }
-    };
-    r.readAsText(file);
-  }
-
-  /* ==================== wiring ==================== */
-  function wireTabs() {
-    $("tabs").addEventListener("click", (e) => {
-      const btn = e.target.closest("button[data-pane]");
-      if (!btn) return;
-      document.querySelectorAll("#tabs button").forEach((b) => b.classList.toggle("active", b === btn));
-      document.querySelectorAll(".pane").forEach((p) => p.classList.toggle("active", p.dataset.pane === btn.dataset.pane));
-    });
-  }
-
-  function wireTransport() {
-    $("btnPlay").addEventListener("click", () => {
-      if (!audioBuffer && !audioEl) { $("drop").classList.add("over"); return; }
-      if (playing) pausePlayback();
-      else startPlayback(getCurrentTime());
-    });
-    $("btnStop").addEventListener("click", stopPlayback);
-    seek.addEventListener("input", () => {
-      const d = getDuration();
-      if (d) seekTo((seek.value / 1000) * d);
-    });
-    seek.addEventListener("pointerdown", () => { draggingSeek = true; });
-    ["pointerup", "pointercancel", "pointerleave", "blur"].forEach((ev) => {
-      seek.addEventListener(ev, () => { draggingSeek = false; });
-    });
-    canvas.addEventListener("click", () => {
-      if (!audioBuffer && !audioEl) return;
-      if (playing) pausePlayback(); else startPlayback(getCurrentTime());
-    });
-    document.addEventListener("keydown", (e) => {
-      if (e.target.matches("input,textarea,select")) return;
-      if (e.code === "Space") { e.preventDefault(); $("btnPlay").click(); }
-      if (e.code === "ArrowLeft") seekTo(getCurrentTime() - 5);
-      if (e.code === "ArrowRight") seekTo(getCurrentTime() + 5);
-    });
-  }
-
-  function wireFiles() {
-    const drop = $("drop");
-    const input = $("audioFile");
-    drop.addEventListener("click", () => input.click());
-    input.addEventListener("change", () => { if (input.files[0]) loadFile(input.files[0]); });
-    ["dragenter", "dragover"].forEach((ev) => drop.addEventListener(ev, (e) => {
-      e.preventDefault(); drop.classList.add("over");
-    }));
-    ["dragleave", "drop"].forEach((ev) => drop.addEventListener(ev, () => drop.classList.remove("over")));
-    const isAudio = (f) => f && (f.type.indexOf("audio") === 0 || /\.(mp3|wav|ogg|m4a|flac|aac)$/i.test(f.name));
-    drop.addEventListener("drop", (e) => {
-      e.preventDefault();
-      const f = e.dataTransfer.files[0];
-      if (isAudio(f)) loadFile(f);
-    });
-    window.addEventListener("dragover", (e) => e.preventDefault());
-    window.addEventListener("drop", (e) => {
-      e.preventDefault();
-      const f = e.dataTransfer && e.dataTransfer.files[0];
-      if (isAudio(f)) loadFile(f);
-    });
-    $("btnLoadUrl").addEventListener("click", () => {
-      const url = $("audioUrl").value.trim();
-      if (!url) return;
-      if (/\.(mp3|wav|ogg|m4a|flac|aac)(\?|$)/i.test(url)) {
-        fetch(url)
-          .then((r) => r.arrayBuffer())
-          .then((ab) => decodeArrayBuffer(ab).then((buf) => {
-            audioBuffer = buf; audioEl = null; useElement = false;
-            fileName.textContent = url.split("/").pop();
-            $("audioInfo").textContent = "Dimuat dari URL.";
-            updateDuration();
-          }).catch(() => setupElementSource(url, url.split("/").pop())))
-          .catch(() => setupElementSource(url, url.split("/").pop()));
-      } else {
-        setupElementSource(url, url.split("/").pop());
-        $("audioInfo").textContent = "Diputar lewat elemen audio.";
-      }
-    });
-    $("bgFile").addEventListener("change", (e) => {
-      if (e.target.files[0]) loadBgMedia(e.target.files[0]);
-    });
-    $("btnBgClear").addEventListener("click", () => {
-      if (bg.element && bg.isVideo) { try { bg.element.pause(); } catch (e) {} }
-      bg.element = null; bg.isVideo = false; bg.name = "";
-      $("bgFile").value = "";
-      stageStatus.textContent = "Media latar dihapus";
-    });
-    $("settingsFile").addEventListener("change", (e) => {
-      if (e.target.files[0]) loadSettingsFile(e.target.files[0]);
-    });
-  }
-
-  function loadBgMedia(file) {
-    const url = URL.createObjectURL(file);
-    if (file.type.indexOf("video") === 0) {
-      const v = document.createElement("video");
-      v.src = url; v.loop = true; v.muted = true; v.playsInline = true; v.autoplay = true;
-      v.addEventListener("loadeddata", () => { v.play().catch(() => {}); });
-      bg.element = v; bg.isVideo = true; bg.name = file.name;
-      state.bgType = "video"; $("bgType").value = "video";
-    } else {
-      const img = new Image();
-      img.onload = () => render();
-      img.src = url;
-      bg.element = img; bg.isVideo = false; bg.name = file.name;
-      state.bgType = "image"; $("bgType").value = "image";
-    }
-    stageStatus.textContent = "Latar: " + file.name;
-  }
-
-  function saveFrame() {
-    const a = document.createElement("a");
-    a.href = canvas.toDataURL("image/png");
-    a.download = "visualizer-frame.png";
-    a.click();
-  }
-
-  function wireExport() {
-    $("btnExportVideo").addEventListener("click", () => {
-      document.querySelector('#tabs button[data-pane="export"]').click();
-      if (!audioBuffer && !audioEl) recStatus.textContent = "Muat audio dulu sebelum export.";
-    });
-    $("btnStartRecord").addEventListener("click", startRecording);
-    $("btnStopRecord").addEventListener("click", stopRecording);
-    $("btnCancelRecord").addEventListener("click", () => {
-      recording = false;
-      const rec = recorder;
-      recorder = null;
-      if (rec) {
-        rec.onstop = null;
-        try { if (rec.state !== "inactive") rec.stop(); } catch (e) {}
-      }
-      try { gainNode.disconnect(); gainNode.connect(analyser); } catch (e) {}
-      chunks = [];
-      lastBlob = null;
-      pausePlayback();
-      $("recBar").classList.remove("show");
-      $("btnStartRecord").disabled = false;
-      $("btnStopRecord").disabled = true;
-      $("btnCancelRecord").disabled = true;
-      recStatus.textContent = "Export dibatalkan.";
-      lastExport.textContent = "Belum ada export.";
-    });
-    $("btnDownloadLast").addEventListener("click", () => {
-      if (!lastUrl) return;
-      const a = document.createElement("a");
-      a.href = lastUrl;
-      a.download = (fileName.textContent || "visualizer").replace(/\.[^.]+$/, "") + "-visualizer.webm";
-      a.click();
-    });
-    $("btnExportPng").addEventListener("click", saveFrame);
-    $("btnFramePng").addEventListener("click", saveFrame);
-    $("btnSaveSettings").addEventListener("click", saveSettings);
-    $("btnLoadSettings").addEventListener("click", () => $("settingsFile").click());
-  }
-
-  function wireMisc() {
-    $("btnHelp").addEventListener("click", () => $("helpModal").classList.add("open"));
-    $("btnHelpClose").addEventListener("click", () => $("helpModal").classList.remove("open"));
-    $("helpModal").addEventListener("click", (e) => {
-      if (e.target === $("helpModal")) $("helpModal").classList.remove("open");
-    });
-    $("btnReset").addEventListener("click", () => {
-      if (!confirm("Reset semua pengaturan tampilan? Audio tetap dimuat.")) return;
-      Object.assign(state, DEFAULTS);
-      syncUI();
-      resizeCanvasToPreset();
-      render();
-    });
-    $("btnLyricAdd").addEventListener("click", addLyricLine);
-    $("btnLyricClear").addEventListener("click", () => {
-      $("lyricsText").value = ""; state.lyricsText = ""; parseLyrics("");
-    });
-    $("btnLyricPaste").addEventListener("click", () => {
-      const ta = $("lyricsText");
-      navigator.clipboard.readText().then((txt) => {
-        ta.value = (ta.value ? ta.value.replace(/\s*$/, "") + "\n" : "") + txt;
-        state.lyricsText = ta.value;
-        parseLyrics(ta.value);
-        stageStatus.textContent = "Teks ditempel";
-      }).catch(() => { stageStatus.textContent = "Tempel manual dengan Ctrl+V"; });
-    });
-    $("btnAutoLyrics").addEventListener("click", autoDistribute);
-    $("previewFit").addEventListener("change", (e) => { canvas.style.objectFit = e.target.value; });
-    canvas.style.objectFit = "contain";
-    $("stageStatus").textContent = "Siap";
-  }
-
-  /* ==================== init ==================== */
-  function init() {
-    bindUI();
-    wireTabs();
-    wireTransport();
-    wireFiles();
-    wireExport();
-    wireMisc();
-    buildPresetGrid();
-    syncUI();
-    resizeCanvasToPreset();
-    loop();
-  }
-
-  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", init);
-  else init();
-})();
-</script>
+    <footer class="modal-foot">
+      <button class="btn" value="close">Close</button>
+    </footer>
+  </form>
+</dialog>
+
+<input type="file" id="audioInput" accept="audio/*" hidden />
+<input type="file" id="settingsInput" accept=".json,application/json" hidden />
+<input type="file" id="lrcInput" accept=".lrc,.txt,text/plain" hidden />
+
+<script type="module" src="assets/js/main.js"></script>
 </body>
 </html>
